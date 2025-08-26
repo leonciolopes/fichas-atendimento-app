@@ -1,4 +1,3 @@
-streamlit
-pandas
-streamlit-authenticator
-streamlit-aggrid
+streamlit>=1.25
+pandas>=1.5
+streamlit-authenticator==0.3.2

@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import streamlit_authenticator as stauth
-from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode, JsCode
 
 # ======================
 # CONFIGURAÇÃO DA PÁGINA
@@ -49,30 +48,53 @@ else:
     # ======================
     st.markdown("""
     <style>
-    .block-container { padding-top: 1rem !important; }
+    .block-container {
+        padding-top: 1rem !important;
+    }
+
     header[data-testid="stHeader"] {visibility: hidden;}
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-
+            
     .header-row {
         display:flex; align-items:center; justify-content:space-between;
         background-color:#004D26; padding:5px; border-radius:8px;
     }
+                
     .app-title {
         flex:1; text-align:center; color:#fff; font-weight:800; font-size:40px;
     }
+                
+    h2, h3, h4 { color:#fff !important; font-weight:800 !important; }
+
+    table {
+        border-collapse: collapse;
+        margin: auto;
+    }
+                
+    th, td {
+        text-align: center !important;
+        padding: 8px;
+        border: 1px solid #1f1f1f;
+    }
+                
+    th {
+        background-color: #e6e6e6;
+        color: black;
+        font-weight: bold;
+    }           
     </style>
     """, unsafe_allow_html=True)
 
     # ======================
-    # CABEÇALHO
+    # CABEÇALHO (logo no canto superior direito)
     # ======================
     st.markdown(
         """
         <div class="header-row">
             <div></div>
             <div class="app-title">Fichas de Atendimento - Gabinete Vereador Leôncio Lopes</div>
-            <img src="https://raw.githubusercontent.com/leonciolopes2528/fichas-atendimento-app/main/Logo-Branca.png" width="300">
+            <img src="https://raw.githubusercontent.com/leonciolopes2528/fichas-atendimento-app/main/Logo-Branca.png" width="250">
         </div>
         """,
         unsafe_allow_html=True
@@ -119,45 +141,35 @@ else:
     df = df[[c for c in colunas_visiveis if c in df.columns]]
 
     # ======================
-    # GRIDOPTIONS DO AGGRID
+    # COLORAÇÃO + CENTRALIZAÇÃO
     # ======================
-    gb = GridOptionsBuilder.from_dataframe(df)
-    gb.configure_pagination(enabled=True, paginationAutoPageSize=False, paginationPageSize=15)  # paginação
-    gb.configure_default_column(cellStyle={'textAlign': 'center'})  # centralizar
-    gb.configure_grid_options(domLayout='normal')  # scroll
+    def highlight_situacao(val):
+        if isinstance(val, str):
+            v = val.lower()
+            if "prejudicado" in v:   return "background-color:#ff4d4d;color:white;font-weight:bold; text-align:center;"
+            if "em andamento" in v:  return "background-color:#ffd633;color:black;font-weight:bold; text-align:center;"
+            if "solucionado" in v:   return "background-color:#33cc33;color:white;font-weight:bold; text-align:center;"
+        return "text-align:center;"
 
-    # Coloração condicional da coluna Situação da Demanda
-    cellsytle_jscode = JsCode("""
-    function(params) {
-        if (params.value && params.colDef.field === 'Situação da Demanda') {
-            let v = params.value.toLowerCase();
-            if (v.includes('prejudicado')) {
-                return { 'color': 'white', 'backgroundColor': '#ff4d4d', 'fontWeight': 'bold', 'textAlign': 'center'};
-            }
-            if (v.includes('em andamento')) {
-                return { 'color': 'black', 'backgroundColor': '#ffd633', 'fontWeight': 'bold', 'textAlign': 'center'};
-            }
-            if (v.includes('solucionado')) {
-                return { 'color': 'white', 'backgroundColor': '#33cc33', 'fontWeight': 'bold', 'textAlign': 'center'};
-            }
-        }
-        return {'textAlign': 'center'};
-    }
-    """)
-    gb.configure_column("Situação da Demanda", cellStyle=cellsytle_jscode)
-
-    grid_options = gb.build()
+    def make_styler(df_in: pd.DataFrame):
+        sty = df_in.style
+        sty = sty.set_properties(**{"text-align": "center"}) \
+                 .set_table_styles([{"selector": "th", "props": [("text-align", "center")]}])
+        if "Situação da Demanda" in df_in.columns:
+            sty = sty.applymap(highlight_situacao, subset=["Situação da Demanda"])
+        try:
+            sty = sty.hide(axis="index")  # pandas >= 1.4
+        except Exception:
+            sty = sty.hide_index()
+        return sty
 
     # ======================
     # EXIBIR TABELA PRINCIPAL
     # ======================
     st.subheader("📌 Fichas de Atendimento")
-    AgGrid(
-        df,
-        gridOptions=grid_options,
-        update_mode=GridUpdateMode.NO_UPDATE,
-        fit_columns_on_grid_load=True,
-        theme="streamlit",  # "streamlit", "light", "dark", "blue", "fresh"
+    st.dataframe(
+        make_styler(df),
+        use_container_width=True,
         height=600
     )
 
@@ -165,22 +177,22 @@ else:
     # FILTROS
     # ======================
     st.subheader("🔎 Filtro de Dados")
-    coluna = st.selectbox("Selecione uma coluna para filtrar:", df.columns, index=0)
+    col1, col2 = st.columns([1,2])
+    with col1:
+        coluna = st.selectbox("Selecione uma coluna para filtrar:", df.columns, index=0)
+
     valor = st.text_input(f"Digite um valor para filtrar em **{coluna}**:")
 
     if valor:
         filtrado = df[df[coluna].astype(str).str.contains(valor, case=False, na=False)]
-        AgGrid(
-            filtrado,
-            gridOptions=grid_options,
-            update_mode=GridUpdateMode.NO_UPDATE,
-            fit_columns_on_grid_load=True,
-            theme="streamlit",
+        st.dataframe(
+            make_styler(filtrado),
+            use_container_width=True,
             height=600
         )
 
     # ======================
-    # FOOTER
+    # FOOTER PROFISSIONAL ESTILO INSTITUCIONAL
     # ======================
     st.markdown(
         """
@@ -189,12 +201,20 @@ else:
             position: relative;
             bottom: 0;
             width: 100%;
-            background-color: #004D26; /* verde escuro */
+            background-color: #003366; /* azul escuro */
             padding: 15px 0;
             text-align: center;
             color: white;
             font-size: 14px;
-            border-top: 2px solid #002214;
+            border-top: 2px solid #002244;
+        }
+        .custom-footer a {
+            color: #66b2ff; /* azul claro para links */
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .custom-footer a:hover {
+            text-decoration: underline;
         }
         </style>
 

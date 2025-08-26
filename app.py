@@ -48,25 +48,28 @@ else:
     # ======================
     st.markdown("""
     <style>
-    /* Cabeçalho */
     .header-row {
         display:flex; align-items:center; justify-content:space-between;
-        background-color:#004D26; padding:15px; border-radius:8px;
+        background-color:#004D26; padding:5px; border-radius:8px;
     }
+                
     .app-title {
-        flex:1; text-align:center; color:#fff; font-weight:800; font-size:28px;
+        flex:1; text-align:center; color:#fff; font-weight:800; font-size:40px;
     }
+                
     h2, h3, h4 { color:#fff !important; font-weight:800 !important; }
-    /* Centralizar tabela */
+
     table {
         border-collapse: collapse;
         margin: auto;
     }
+                
     th, td {
         text-align: center !important;
         padding: 8px;
         border: 1px solid #1f1f1f;
     }
+                
     th {
         background-color: #e6e6e6;
         color: black;
@@ -83,7 +86,7 @@ else:
         <div class="header-row">
             <div></div>
             <div class="app-title">Fichas de Atendimento - Gabinete Vereador Leôncio Lopes</div>
-            <img src="https://raw.githubusercontent.com/leonciolopes2528/fichas-atendimento-app/main/Logo-Branca.png" width="500">
+            <img src="https://raw.githubusercontent.com/leonciolopes2528/fichas-atendimento-app/main/Logo-Branca.png" width="300">
         </div>
         """,
         unsafe_allow_html=True

@@ -3,38 +3,49 @@ import pandas as pd
 import streamlit_authenticator as stauth
 
 # ======================
-# CONFIG DA PÁGINA
+# CONFIGURAÇÃO DA PÁGINA
 # ======================
 st.set_page_config(page_title="Fichas de Atendimento", layout="wide")
 
 # ======================
-# ---- LOGIN OBRIGATÓRIO ----
-# Credenciais vêm de st.secrets (definiremos no passo 3)
+# LOGIN (usa os Secrets do Streamlit Cloud)
+# ======================
 credentials = {
     "usernames": {
-        "admin":   {"name": "Admin",           "password": st.secrets["passwords"]["admin"]},
-        "leoncio": {"name": "Leôncio Lopes",   "password": st.secrets["passwords"]["leoncio"]},
-        # adicione mais usuários aqui se quiser
+        "admin": {
+            "name": "Admin",
+            "password": st.secrets["passwords"]["admin"],
+        },
+        "leoncio": {
+            "name": "Leôncio Lopes",
+            "password": st.secrets["passwords"]["leoncio"],
+        },
     }
 }
+
 authenticator = stauth.Authenticate(
     credentials,
     st.secrets["cookie"]["name"],
     st.secrets["cookie"]["key"],
     cookie_expiry_days=st.secrets["cookie"]["expiry_days"]
 )
-name, auth_status, username = authenticator.login("Login", "main")
 
+# Tela de login na sidebar
+name, auth_status, username = authenticator.login(location="sidebar")
+
+# ======================
+# VERIFICAÇÃO DE LOGIN
+# ======================
 if auth_status is False:
     st.error("Usuário ou senha incorretos ❌")
+
 elif auth_status is None:
     st.warning("Digite usuário e senha para continuar 🔑")
+
 else:
     # ======================
-    # (usuário autenticado) – conteúdo do app
+    # CSS EXTRA
     # ======================
-
-    # CSS extra (logo à direita, bordas da tabela, títulos, etc.)
     st.markdown("""
     <style>
     .header-row { display:flex; align-items:center; justify-content:space-between; }
@@ -47,7 +58,9 @@ else:
     </style>
     """, unsafe_allow_html=True)
 
-    # Cabeçalho (título + logo no canto superior direito)
+    # ======================
+    # CABEÇALHO
+    # ======================
     st.markdown(
         """
         <div class="header-row">
@@ -59,15 +72,18 @@ else:
         unsafe_allow_html=True
     )
 
-    # Dados (Google Sheets público)
+    # ======================
+    # CARREGAR PLANILHA
+    # ======================
     url = "https://docs.google.com/spreadsheets/d/1TU9o9bgZPfZ-aKrxfgUqG03jTZOM3mWl0CCLn5SfwO0/export?format=csv&gid=0"
     df = pd.read_csv(url)
 
-    # Tabela interativa
+    # ======================
+    # EXIBIR TABELA
+    # ======================
     st.subheader("📌 Dados atualizados diretamente da nuvem")
     st.dataframe(df, use_container_width=True)
 
-    # Tabela estática com bordas e cabeçalho em negrito (opcional)
     with st.expander("Ver tabela com bordas escuras e cabeçalhos em negrito (estática)"):
         st.table(
             df.style
@@ -78,18 +94,22 @@ else:
               ])
         )
 
-    # Filtros com dica de preenchimento
+    # ======================
+    # FILTROS
+    # ======================
     st.subheader("🔎 Filtro de Dados")
+
     coluna = st.selectbox("Selecione uma coluna para filtrar:", df.columns, index=0)
 
+    # Dicas automáticas
     if any(x in coluna.lower() for x in ["data"]):
         dica = "📅 Digite a data no formato **DD/MM/AAAA** (ex.: 25/08/2025)."
     elif any(x in coluna.lower() for x in ["telefone", "cpf", "identidade"]):
-        dica = "🔢 Digite **números** ou parte do número (sem pontos/traços, se preferir)."
+        dica = "🔢 Digite **números** ou parte do número."
     elif "sexo" in coluna.lower():
         dica = "⚧ Digite **Masculino** ou **Feminino**."
     elif any(x in coluna.lower() for x in ["estado civil", "profissão", "bairro", "área da demanda", "servidor"]):
-        dica = "✏️ Digite **parte do texto** (não precisa ser igualzinho)."
+        dica = "✏️ Digite **parte do texto** (não precisa ser completo)."
     else:
         dica = "✏️ Digite **texto ou número** presente na coluna escolhida."
 
@@ -100,5 +120,5 @@ else:
         filtrado = df[df[coluna].astype(str).str.contains(valor, case=False, na=False)]
         st.dataframe(filtrado, use_container_width=True)
 
-    # botão de logout
+    # Botão de logout
     authenticator.logout("Sair", "sidebar")

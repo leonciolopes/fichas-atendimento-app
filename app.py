@@ -44,14 +44,11 @@ elif auth_status is None:
 
 else:
     # ======================
-    # CSS EXTRA (responsividade incluída)
+    # CSS EXTRA (responsivo estilo desktop reduzido no mobile)
     # ======================
     st.markdown("""
     <style>
-    .block-container {
-        padding-top: 1rem !important;
-    }
-
+    .block-container { padding-top: 1rem !important; }
     header[data-testid="stHeader"] {visibility: hidden;}
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
@@ -65,19 +62,16 @@ else:
         flex:1; text-align:center; color:#fff; font-weight:800; font-size:40px;
     }
 
+    h2, h3, h4 {
+        color:#fff !important; font-weight:800 !important;
+    }
+
     /* ===== Responsividade para celular ===== */
     @media (max-width: 768px) {
-        .header-row {
-            flex-direction: column !important;
-            text-align: center !important;
-        }
-        .header-row img {
-            width: 120px !important;   /* logo menor */
-            margin-bottom: 10px !important;
-        }
-        .app-title {
-            font-size: 24px !important; /* título menor no mobile */
-        }
+        .app-title { font-size: 22px !important; }
+        .header-row img { width: 120px !important; }
+        h2, h3, h4 { font-size: 16px !important; }  /* subtítulos menores */
+        .stDataFrame { font-size: 12px !important; } /* tabela fonte menor */
     }
     </style>
     """, unsafe_allow_html=True)
@@ -160,7 +154,7 @@ else:
     st.dataframe(
         make_styler(df),
         use_container_width=True,
-        height=600
+        height=400  # 🔹 tabela mais baixa (menos linhas visíveis)
     )
 
     # ======================
@@ -178,7 +172,7 @@ else:
         st.dataframe(
             make_styler(filtrado),
             use_container_width=True,
-            height=600
+            height=400  # 🔹 também reduzido
         )
 
     # Botão de logout

@@ -8,7 +8,7 @@ import streamlit_authenticator as stauth
 st.set_page_config(page_title="Fichas de Atendimento", layout="wide")
 
 # ======================
-# LOGIN (usa os Secrets do Streamlit Cloud)
+# LOGIN
 # ======================
 credentials = {
     "usernames": {
@@ -44,7 +44,7 @@ elif auth_status is None:
 
 else:
     # ======================
-    # CSS EXTRA
+    # CSS EXTRA (responsividade incluída)
     # ======================
     st.markdown("""
     <style>
@@ -64,35 +64,30 @@ else:
     .app-title {
         flex:1; text-align:center; color:#fff; font-weight:800; font-size:40px;
     }
-                
-    h2, h3, h4 { color:#fff !important; font-weight:800 !important; }
 
-    table {
-        border-collapse: collapse;
-        margin: auto;
+    /* ===== Responsividade para celular ===== */
+    @media (max-width: 768px) {
+        .header-row {
+            flex-direction: column !important;
+            text-align: center !important;
+        }
+        .header-row img {
+            width: 120px !important;   /* logo menor */
+            margin-bottom: 10px !important;
+        }
+        .app-title {
+            font-size: 24px !important; /* título menor no mobile */
+        }
     }
-                
-    th, td {
-        text-align: center !important;
-        padding: 8px;
-        border: 1px solid #1f1f1f;
-    }
-                
-    th {
-        background-color: #e6e6e6;
-        color: black;
-        font-weight: bold;
-    }           
     </style>
     """, unsafe_allow_html=True)
 
     # ======================
-    # CABEÇALHO (logo no canto superior direito)
+    # CABEÇALHO
     # ======================
     st.markdown(
         """
         <div class="header-row">
-            <div></div>
             <div class="app-title">Fichas de Atendimento - Gabinete Vereador Leôncio Lopes</div>
             <img src="https://raw.githubusercontent.com/leonciolopes2528/fichas-atendimento-app/main/Logo-Branca.png" width="250">
         </div>
@@ -107,9 +102,6 @@ else:
     df = pd.read_csv(url)
     df.columns = df.columns.str.replace(r"\s+", " ", regex=True).str.strip()
 
-    # ======================
-    # FILTRAR/RENOMEAR COLUNAS
-    # ======================
     mapeamento = {
         "Data de Atendimento": "Data de Atendimento",
         "Nome Completo": "Nome",
@@ -128,11 +120,9 @@ else:
     existentes = [c for c in mapeamento if c in df.columns]
     df = df[existentes].rename(columns=mapeamento)
 
-    # 🔹 Remover linhas sem Nome preenchido
     if "Nome" in df.columns:
         df = df[df["Nome"].notna() & (df["Nome"].str.strip() != "")]
 
-    # Colunas visíveis (sem Data de Atendimento)
     colunas_visiveis = [
         "Nome", "Telefone", "Rua", "Número", "Bairro",
         "Área da Demanda", "Resumo da Demanda", "Servidor Responsável",
@@ -158,7 +148,7 @@ else:
         if "Situação da Demanda" in df_in.columns:
             sty = sty.applymap(highlight_situacao, subset=["Situação da Demanda"])
         try:
-            sty = sty.hide(axis="index")  # pandas >= 1.4
+            sty = sty.hide(axis="index")
         except Exception:
             sty = sty.hide_index()
         return sty

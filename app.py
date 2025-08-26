@@ -49,17 +49,18 @@ else:
     st.markdown("""
     <style>
     /* Cabeçalho */
-    .header-row { 
-        display:flex; align-items:center; justify-content:space-between; 
+    .header-row {
+        display:flex; align-items:center; justify-content:space-between;
         background-color:#004D26; padding:15px; border-radius:8px;
     }
-    .app-title { 
-        flex:1; text-align:center; color:#fff; font-weight:800; font-size:28px; 
+    .app-title {
+        flex:1; text-align:center; color:#fff; font-weight:800; font-size:28px;
     }
     h2, h3, h4 { color:#fff !important; font-weight:800 !important; }
+
     /* Footer */
-    .footer { 
-        text-align:center; color:white; padding:12px; margin-top:30px; 
+    .footer {
+        text-align:center; color:white; padding:12px; margin-top:30px;
         background-color:#002d17; border-radius:8px; font-size:14px;
     }
     </style>
@@ -84,8 +85,6 @@ else:
     # ======================
     url = "https://docs.google.com/spreadsheets/d/1TU9o9bgZPfZ-aKrxfgUqG03jTZOM3mWl0CCLn5SfwO0/export?format=csv&gid=0"
     df = pd.read_csv(url)
-
-    # normaliza nomes de colunas
     df.columns = df.columns.str.replace(r"\s+", " ", regex=True).str.strip()
 
     # ======================
@@ -123,7 +122,7 @@ else:
         df = df.sort_values("Data da Atualização", ascending=False)
 
     # ======================
-    # COLORAÇÃO DA SITUAÇÃO + CENTRALIZAÇÃO
+    # COLORAÇÃO + CENTRALIZAÇÃO (Styler)
     # ======================
     def highlight_situacao(val):
         if isinstance(val, str):
@@ -133,31 +132,40 @@ else:
             if "solucionado" in v:   return "background-color:#33cc33;color:white;font-weight:bold; text-align:center;"
         return "text-align:center;"
 
-    if "Situação da Demanda" in df.columns:
-        styled_df = (
-            df.style
-              .applymap(highlight_situacao, subset=["Situação da Demanda"])
-              .set_properties(**{"text-align": "center"})  # centraliza células
-              .set_table_styles([{"selector":"th","props":[("text-align","center")]}])  # centraliza cabeçalho
-        )
-    else:
-        styled_df = (
-            df.style
-              .set_properties(**{"text-align": "center"})
-              .set_table_styles([{"selector":"th","props":[("text-align","center")]}])
+    def make_styler(df_in: pd.DataFrame) -> pd.io.formats.style.Styler:
+        sty = df_in.style
+        # centraliza cabeçalho e células
+        sty = sty.set_properties(**{"text-align": "center"}) \
+                 .set_table_styles([{"selector": "th", "props": [("text-align", "center")]}])
+        # aplica cores na situação (se existir)
+        if "Situação da Demanda" in df_in.columns:
+            sty = sty.applymap(highlight_situacao, subset=["Situação da Demanda"])
+        # esconde o índice (linha 0)
+        try:
+            sty = sty.hide(axis="index")  # pandas >= 1.4
+        except Exception:
+            sty = sty.hide_index()        # fallback para pandas antigos
+        return sty
+
+    # ======================
+    # RENDER HTML (garantir rolagem + sem índice)
+    # ======================
+    def render_table_html(styler: pd.io.formats.style.Styler, width_px=1200, height_px=600):
+        html = styler.to_html()
+        st.markdown(
+            f"""
+            <div style="width:{width_px}px; height:{height_px}px; overflow:auto; border-radius:6px; background: white;">
+                {html}
+            </div>
+            """,
+            unsafe_allow_html=True
         )
 
     # ======================
-    # EXIBIR TABELA (largura fixa + rolagem horizontal + ocultar índice)
+    # EXIBIR TABELA PRINCIPAL
     # ======================
     st.subheader("📌 Fichas de Atendimento (simplificado)")
-    st.dataframe(
-        styled_df,
-        use_container_width=False,
-        width=1200,
-        height=600,
-        hide_index=True  # 🔒 esconde a coluna do índice ("linha 0")
-    )
+    render_table_html(make_styler(df), width_px=1200, height_px=600)
 
     # ======================
     # FILTROS
@@ -184,27 +192,7 @@ else:
 
     if valor:
         filtrado = df[df[coluna].astype(str).str.contains(valor, case=False, na=False)]
-        if "Situação da Demanda" in filtrado.columns:
-            styled_filtrado = (
-                filtrado.style
-                    .applymap(highlight_situacao, subset=["Situação da Demanda"])
-                    .set_properties(**{"text-align": "center"})
-                    .set_table_styles([{"selector":"th","props":[("text-align","center")]}])
-            )
-        else:
-            styled_filtrado = (
-                filtrado.style
-                    .set_properties(**{"text-align": "center"})
-                    .set_table_styles([{"selector":"th","props":[("text-align","center")]}])
-            )
-
-        st.dataframe(
-            styled_filtrado,
-            use_container_width=False,
-            width=1200,
-            height=600,
-            hide_index=True  # 🔒 esconde índice também na tabela filtrada
-        )
+        render_table_html(make_styler(filtrado), width_px=1200, height_px=600)
 
     # ======================
     # FOOTER PROFISSIONAL

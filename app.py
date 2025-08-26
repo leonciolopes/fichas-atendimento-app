@@ -94,7 +94,7 @@ else:
         <div class="header-row">
             <div></div>
             <div class="app-title">Fichas de Atendimento - Gabinete Vereador Leôncio Lopes</div>
-            <img src="https://raw.githubusercontent.com/leonciolopes2528/fichas-atendimento-app/main/Logo-Branca.png" width="300">
+            <img src="https://raw.githubusercontent.com/leonciolopes2528/fichas-atendimento-app/main/Logo-Branca.png" width="250">
         </div>
         """,
         unsafe_allow_html=True
@@ -167,11 +167,7 @@ else:
     # EXIBIR TABELA PRINCIPAL
     # ======================
     st.subheader("📌 Fichas de Atendimento")
-    st.dataframe(
-        make_styler(df),
-        use_container_width=True,
-        height=600
-    )
+    st.markdown(make_styler(df).to_html(), unsafe_allow_html=True)
 
     # ======================
     # FILTROS
@@ -185,11 +181,7 @@ else:
 
     if valor:
         filtrado = df[df[coluna].astype(str).str.contains(valor, case=False, na=False)]
-        st.dataframe(
-            make_styler(filtrado),
-            use_container_width=True,
-            height=600
-        )
+        st.markdown(make_styler(filtrado).to_html(), unsafe_allow_html=True)
 
     # ======================
     # FOOTER PROFISSIONAL ESTILO INSTITUCIONAL

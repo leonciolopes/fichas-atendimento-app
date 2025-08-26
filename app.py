@@ -191,40 +191,5 @@ else:
             height=600
         )
 
-    # ======================
-    # FOOTER PROFISSIONAL ESTILO INSTITUCIONAL
-    # ======================
-    st.markdown(
-        """
-        <style>
-        .custom-footer {
-            position: relative;
-            bottom: 0;
-            width: 100%;
-            background-color: #003366; /* azul escuro */
-            padding: 15px 0;
-            text-align: center;
-            color: white;
-            font-size: 14px;
-            border-top: 2px solid #002244;
-        }
-        .custom-footer a {
-            color: #66b2ff; /* azul claro para links */
-            text-decoration: none;
-            font-weight: bold;
-        }
-        .custom-footer a:hover {
-            text-decoration: underline;
-        }
-        </style>
-
-        <div class="custom-footer">
-            © 2025 Gabinete Vereador <b>Leôncio Lopes</b> da Câmara Municipal de Sete Lagoas. <br>
-            Todos os direitos reservados. 
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
     # Botão de logout
     authenticator.logout("Sair", "sidebar")

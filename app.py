@@ -68,7 +68,7 @@ else:
         <div class="header-row">
             <div></div>
             <div class="app-title">Fichas de Atendimento - Gabinete Vereador Leôncio Lopes</div>
-            <img src="Logo-Branca.png" width="90">
+            <img src="{{ site.baseurl }}/Logo-Branca.png" width="90">
         </div>
         """,
         unsafe_allow_html=True
@@ -172,7 +172,7 @@ else:
         """
         <style>
         .custom-footer {
-            position: fixed;
+            position: relative;
             bottom: 0;
             width: 100%;
             background-color: #003366; /* azul escuro */

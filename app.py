@@ -17,7 +17,7 @@ credentials = {
             "password": st.secrets["passwords"]["admin"],
         },
         "gabinete": {
-            "name": "Gabinete",
+            "name": "Gabinete Vereador",
             "password": st.secrets["passwords"]["gabinete"],
         },
     }
@@ -48,13 +48,18 @@ else:
     # ======================
     st.markdown("""
     <style>
-    .header-row { display:flex; align-items:center; justify-content:space-between; }
-    .app-title { flex:1; text-align:center; color:#fff; font-weight:800; font-size:30px; }
+    .header-row { 
+        display:flex; align-items:center; justify-content:space-between; 
+        background-color:#004D26; padding:15px; border-radius:8px;
+    }
+    .app-title { 
+        flex:1; text-align:center; color:#fff; font-weight:800; font-size:28px; 
+    }
     h2, h3, h4 { color:#fff !important; font-weight:800 !important; }
-    table { border-collapse: collapse !important; width: 100% !important; }
-    th, td { border: 1px solid #1f1f1f !important; padding: 6px 8px !important; }
-    th { background:#e6e6e6 !important; color:#000 !important; font-weight:800 !important; }
-    [data-baseweb="select"] div, .stTextInput input { color:#111 !important; }
+    .footer { 
+        text-align:center; color:white; padding:10px; margin-top:30px; 
+        background-color:#004D26; border-radius:8px;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -66,7 +71,7 @@ else:
         <div class="header-row">
             <div></div>
             <div class="app-title">Fichas de Atendimento - Gabinete Vereador Leôncio Lopes</div>
-            <img src="https://drive.google.com/uc?export=view&id=1-2-Ke-C2t8QLyRBpCYPsE8kKvgrVcc6h" width="110">
+            <img src="https://drive.google.com/uc?export=view&id=1-2-Ke-C2t8QLyRBpCYPsE8kKvgrVcc6h" width="90">
         </div>
         """,
         unsafe_allow_html=True
@@ -79,46 +84,82 @@ else:
     df = pd.read_csv(url)
 
     # ======================
-    # EXIBIR TABELA
+    # FILTRAR COLUNAS DE INTERESSE
     # ======================
-    st.subheader("📌 Dados atualizados diretamente da nuvem")
-    st.dataframe(df, use_container_width=True)
+    colunas_desejadas = [
+        "Nome",
+        "Telefone",
+        "Rua",
+        "Número",
+        "Bairro",
+        "Área da demanda",
+        "Resumo da Demanda",
+        "Servidor Responsável",
+        "Situação da Demanda",
+        "Descrição da Situação",
+        "Data da Atualização"
+    ]
+    df = df[[c for c in colunas_desejadas if c in df.columns]]  # garante que só pega colunas que existem
 
-    with st.expander("Ver tabela com bordas escuras e cabeçalhos em negrito (estática)"):
-        st.table(
-            df.style
-              .hide(axis="index")
-              .set_table_styles([
-                  {"selector": "th, td", "props": [("border", "1px solid #1f1f1f")]},
-                  {"selector": "th", "props": [("font-weight", "800"), ("background-color", "#e6e6e6"), ("color", "#000")]}
-              ])
-        )
+    # ======================
+    # COLORAÇÃO DA SITUAÇÃO
+    # ======================
+    def highlight_situacao(val):
+        if isinstance(val, str):
+            if "prejudicado" in val.lower():
+                return "background-color: #ff4d4d; color: white; font-weight: bold;"  # vermelho
+            elif "em andamento" in val.lower():
+                return "background-color: #ffd633; color: black; font-weight: bold;"  # amarelo
+            elif "solucionado" in val.lower():
+                return "background-color: #33cc33; color: white; font-weight: bold;"  # verde
+        return ""
+
+    styled_df = df.style.applymap(highlight_situacao, subset=["Situação da Demanda"])
+
+    # ======================
+    # EXIBIR TABELA SIMPLIFICADA
+    # ======================
+    st.subheader("📌 Fichas de Atendimento")
+    st.dataframe(styled_df, use_container_width=True)
 
     # ======================
     # FILTROS
     # ======================
     st.subheader("🔎 Filtro de Dados")
 
-    coluna = st.selectbox("Selecione uma coluna para filtrar:", df.columns, index=0)
+    col1, col2 = st.columns([1,2])
+    with col1:
+        coluna = st.selectbox("Selecione uma coluna para filtrar:", df.columns, index=0)
 
-    # Dicas automáticas
-    if any(x in coluna.lower() for x in ["data"]):
-        dica = "📅 Digite a data no formato **DD/MM/AAAA** (ex.: 25/08/2025)."
-    elif any(x in coluna.lower() for x in ["telefone", "cpf", "identidade"]):
-        dica = "🔢 Digite **números** ou parte do número."
-    elif "sexo" in coluna.lower():
-        dica = "⚧ Digite **Masculino** ou **Feminino**."
-    elif any(x in coluna.lower() for x in ["estado civil", "profissão", "bairro", "área da demanda", "servidor"]):
-        dica = "✏️ Digite **parte do texto** (não precisa ser completo)."
-    else:
-        dica = "✏️ Digite **texto ou número** presente na coluna escolhida."
+    with col2:
+        if any(x in coluna.lower() for x in ["data"]):
+            dica = "📅 Digite a data no formato **DD/MM/AAAA**."
+        elif any(x in coluna.lower() for x in ["telefone", "cpf", "identidade"]):
+            dica = "🔢 Digite números ou parte do número."
+        elif "sexo" in coluna.lower():
+            dica = "⚧ Digite Masculino ou Feminino."
+        elif any(x in coluna.lower() for x in ["estado civil", "profissão", "bairro", "área da demanda", "servidor"]):
+            dica = "✏️ Digite parte do texto (não precisa ser completo)."
+        else:
+            dica = "✏️ Digite texto ou número presente na coluna escolhida."
+        st.caption(dica)
 
-    st.caption(dica)
     valor = st.text_input(f"Digite um valor para filtrar em **{coluna}**:")
 
     if valor:
         filtrado = df[df[coluna].astype(str).str.contains(valor, case=False, na=False)]
-        st.dataframe(filtrado, use_container_width=True)
+        st.dataframe(
+            filtrado.style.applymap(highlight_situacao, subset=["Situação da Demanda"]),
+            use_container_width=True
+        )
+
+    # ======================
+    # FOOTER
+    # ======================
+    st.markdown(
+        "<div class='footer'>📌 Desenvolvido para o Gabinete Vereador Leôncio Lopes</div>",
+        unsafe_allow_html=True
+    )
 
     # Botão de logout
     authenticator.logout("Sair", "sidebar")

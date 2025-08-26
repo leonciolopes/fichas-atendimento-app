@@ -57,6 +57,23 @@ else:
         flex:1; text-align:center; color:#fff; font-weight:800; font-size:28px;
     }
     h2, h3, h4 { color:#fff !important; font-weight:800 !important; }
+
+    /* Centralizar tabela */
+    table {
+        border-collapse: collapse;
+        margin: auto;
+        width: 100%;
+    }
+    th, td {
+        text-align: center !important;
+        padding: 8px;
+        border: 1px solid #1f1f1f;
+    }
+    th {
+        background-color: #e6e6e6;
+        color: black;
+        font-weight: bold;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -68,7 +85,7 @@ else:
         <div class="header-row">
             <div></div>
             <div class="app-title">Fichas de Atendimento - Gabinete Vereador Leôncio Lopes</div>
-            <img src="https://raw.githubusercontent.com/leonciolopes2528/fichas-atendimento-app/main/Logo-Branca.png" width="90">
+            <img src="https://raw.githubusercontent.com/leonciolopes2528/fichas-atendimento-app/main/Logo-Branca.png" width="300">
         </div>
         """,
         unsafe_allow_html=True
@@ -85,7 +102,6 @@ else:
     # FILTRAR/RENOMEAR COLUNAS
     # ======================
     mapeamento = {
-        "Data de Atendimento": "Data de Atendimento",
         "Nome Completo": "Nome",
         "Telefone (31)9xxxx-xxxx": "Telefone",
         "Endereço": "Rua",
@@ -106,29 +122,22 @@ else:
     if "Nome" in df.columns:
         df = df[df["Nome"].notna() & (df["Nome"].str.strip() != "")]
 
-    # Colunas visíveis (sem Data de Atendimento)
-    colunas_visiveis = [
-        "Nome", "Telefone", "Rua", "Número", "Bairro",
-        "Área da Demanda", "Resumo da Demanda", "Servidor Responsável",
-        "Situação da Demanda", "Descrição da Situação", "Data da Atualização"
-    ]
-    df = df[[c for c in colunas_visiveis if c in df.columns]]
-
     # ======================
-    # COLORAÇÃO + CENTRALIZAÇÃO
+    # COLORAÇÃO CONDICIONAL
     # ======================
     def highlight_situacao(val):
         if isinstance(val, str):
             v = val.lower()
-            if "prejudicado" in v:   return "background-color:#ff4d4d;color:white;font-weight:bold; text-align:center;"
-            if "em andamento" in v:  return "background-color:#ffd633;color:black;font-weight:bold; text-align:center;"
-            if "solucionado" in v:   return "background-color:#33cc33;color:white;font-weight:bold; text-align:center;"
+            if "prejudicado" in v:
+                return "background-color:#ff4d4d;color:white;font-weight:bold;text-align:center;"
+            if "em andamento" in v:
+                return "background-color:#ffd633;color:black;font-weight:bold;text-align:center;"
+            if "solucionado" in v:
+                return "background-color:#33cc33;color:white;font-weight:bold;text-align:center;"
         return "text-align:center;"
 
     def make_styler(df_in: pd.DataFrame):
-        sty = df_in.style
-        sty = sty.set_properties(**{"text-align": "center"}) \
-                 .set_table_styles([{"selector": "th", "props": [("text-align", "center")]}])
+        sty = df_in.style.set_properties(**{"text-align": "center"})
         if "Situação da Demanda" in df_in.columns:
             sty = sty.applymap(highlight_situacao, subset=["Situação da Demanda"])
         try:
@@ -138,63 +147,32 @@ else:
         return sty
 
     # ======================
-    # EXIBIR TABELA PRINCIPAL
+    # EXIBIR TABELA
     # ======================
     st.subheader("📌 Fichas de Atendimento")
-    st.dataframe(
-        make_styler(df),
-        use_container_width=True,
-        height=600
-    )
+    st.markdown(make_styler(df).to_html(), unsafe_allow_html=True)
 
     # ======================
     # FILTROS
     # ======================
     st.subheader("🔎 Filtro de Dados")
-    col1, col2 = st.columns([1,2])
-    with col1:
-        coluna = st.selectbox("Selecione uma coluna para filtrar:", df.columns, index=0)
-
+    coluna = st.selectbox("Selecione uma coluna para filtrar:", df.columns, index=0)
     valor = st.text_input(f"Digite um valor para filtrar em **{coluna}**:")
 
     if valor:
         filtrado = df[df[coluna].astype(str).str.contains(valor, case=False, na=False)]
-        st.dataframe(
-            make_styler(filtrado),
-            use_container_width=True,
-            height=600
-        )
+        st.markdown(make_styler(filtrado).to_html(), unsafe_allow_html=True)
 
     # ======================
-    # FOOTER PROFISSIONAL ESTILO INSTITUCIONAL
+    # FOOTER
     # ======================
     st.markdown(
         """
-        <style>
-        .custom-footer {
-            position: relative;
-            bottom: 0;
-            width: 100%;
-            background-color: #003366; /* azul escuro */
-            padding: 15px 0;
-            text-align: center;
-            color: white;
-            font-size: 14px;
-            border-top: 2px solid #002244;
-        }
-        .custom-footer a {
-            color: #66b2ff; /* azul claro para links */
-            text-decoration: none;
-            font-weight: bold;
-        }
-        .custom-footer a:hover {
-            text-decoration: underline;
-        }
-        </style>
-
-        <div class="custom-footer">
+        <div class="custom-footer" style="
+            bottom:0; width:100%; background-color:#003366; padding:15px 0;
+            text-align:center; color:white; font-size:14px; border-top:2px solid #002244;">
             © 2025 Gabinete Vereador <b>Leôncio Lopes</b> da Câmara Municipal de Sete Lagoas. <br>
-            Todos os direitos reservados. 
+            Todos os direitos reservados.
         </div>
         """,
         unsafe_allow_html=True

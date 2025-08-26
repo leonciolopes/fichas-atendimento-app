@@ -62,16 +62,11 @@ else:
         text-align:center; color:white; padding:12px; margin-top:30px; 
         background-color:#002d17; border-radius:8px; font-size:14px;
     }
-    /* Centralizar conteúdo da tabela */
-    .stDataFrame td, .stDataFrame th {
-        text-align: center !important;
-        vertical-align: middle !important;
-    }
     </style>
     """, unsafe_allow_html=True)
 
     # ======================
-    # CABEÇALHO
+    # CABEÇALHO (logo no canto superior direito)
     # ======================
     st.markdown(
         """
@@ -107,7 +102,7 @@ else:
         "Servidor Responsável": "Servidor Responsável",
         "Situação da Demanda": "Situação da Demanda",
         "Descrição da Situação": "Descrição da Situação"
-        # "Data da Atualização" já está correto
+        # "Data da Atualização" já está correto no CSV
     }
 
     existentes = [c for c in mapeamento if c in df.columns]
@@ -128,30 +123,40 @@ else:
         df = df.sort_values("Data da Atualização", ascending=False)
 
     # ======================
-    # COLORAÇÃO DA SITUAÇÃO
+    # COLORAÇÃO DA SITUAÇÃO + CENTRALIZAÇÃO
     # ======================
     def highlight_situacao(val):
         if isinstance(val, str):
             v = val.lower()
-            if "prejudicado" in v:   return "background-color:#ff4d4d;color:white;font-weight:bold;"
-            if "em andamento" in v:  return "background-color:#ffd633;color:black;font-weight:bold;"
-            if "solucionado" in v:   return "background-color:#33cc33;color:white;font-weight:bold;"
-        return ""
+            if "prejudicado" in v:   return "background-color:#ff4d4d;color:white;font-weight:bold; text-align:center;"
+            if "em andamento" in v:  return "background-color:#ffd633;color:black;font-weight:bold; text-align:center;"
+            if "solucionado" in v:   return "background-color:#33cc33;color:white;font-weight:bold; text-align:center;"
+        return "text-align:center;"
 
-    styled_df = (
-        df.style.applymap(highlight_situacao, subset=["Situação da Demanda"])
-        if "Situação da Demanda" in df.columns else df
-    )
+    if "Situação da Demanda" in df.columns:
+        styled_df = (
+            df.style
+              .applymap(highlight_situacao, subset=["Situação da Demanda"])
+              .set_properties(**{"text-align": "center"})  # centraliza células
+              .set_table_styles([{"selector":"th","props":[("text-align","center")]}])  # centraliza cabeçalho
+        )
+    else:
+        styled_df = (
+            df.style
+              .set_properties(**{"text-align": "center"})
+              .set_table_styles([{"selector":"th","props":[("text-align","center")]}])
+        )
 
     # ======================
-    # EXIBIR TABELA
+    # EXIBIR TABELA (largura fixa + rolagem horizontal + ocultar índice)
     # ======================
     st.subheader("📌 Fichas de Atendimento (simplificado)")
     st.dataframe(
-        styled_df.hide(axis="index"),  # oculta linha 0 (índice)
+        styled_df,
         use_container_width=False,
         width=1200,
-        height=600
+        height=600,
+        hide_index=True  # 🔒 esconde a coluna do índice ("linha 0")
     )
 
     # ======================
@@ -179,15 +184,30 @@ else:
 
     if valor:
         filtrado = df[df[coluna].astype(str).str.contains(valor, case=False, na=False)]
+        if "Situação da Demanda" in filtrado.columns:
+            styled_filtrado = (
+                filtrado.style
+                    .applymap(highlight_situacao, subset=["Situação da Demanda"])
+                    .set_properties(**{"text-align": "center"})
+                    .set_table_styles([{"selector":"th","props":[("text-align","center")]}])
+            )
+        else:
+            styled_filtrado = (
+                filtrado.style
+                    .set_properties(**{"text-align": "center"})
+                    .set_table_styles([{"selector":"th","props":[("text-align","center")]}])
+            )
+
         st.dataframe(
-            filtrado.style.applymap(highlight_situacao, subset=["Situação da Demanda"]).hide(axis="index"),
+            styled_filtrado,
             use_container_width=False,
             width=1200,
-            height=600
+            height=600,
+            hide_index=True  # 🔒 esconde índice também na tabela filtrada
         )
 
     # ======================
-    # FOOTER
+    # FOOTER PROFISSIONAL
     # ======================
     st.markdown(
         "<div class='footer'>📌 Desenvolvido para o Gabinete Vereador Leôncio Lopes — Todos os direitos reservados</div>",

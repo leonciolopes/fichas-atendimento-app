@@ -88,12 +88,12 @@ else:
     # ======================
     # FILTRAR COLUNAS DE INTERESSE
     # ======================
-    colunas_desejadas = {
+    colunas_mapeamento = {
     "Nome Completo": "Nome",
     "Telefone (31)9xxxx-xxxx": "Telefone",
-    "Rua": "Rua",
-    "Número": "Número",
-    "Bairro": "Bairro",
+    "Endereço": "Rua",
+    "Unnamed: 9": "Número",
+    "Unnamed: 10": "Bairro",
     "Área da Demanda": "Área da Demanda",
     "Resumo da Demanda": "Resumo da Demanda",
     "Servidor Responsável": "Servidor Responsável",
@@ -102,10 +102,8 @@ else:
     "Data da Atualização": "Data da Atualização"
     }
 
-    # Seleciona apenas colunas existentes e renomeia
-    df = df[[c for c in colunas_desejadas.keys() if c in df.columns]]
-    df = df.rename(columns=colunas_desejadas)
-
+    df = df[[c for c in colunas_mapeamento.keys() if c in df.columns]]
+    df = df.rename(columns=colunas_mapeamento)
     # ======================
     # COLORAÇÃO DA SITUAÇÃO
     # ======================

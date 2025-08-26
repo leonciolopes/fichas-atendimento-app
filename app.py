@@ -48,38 +48,37 @@ else:
     # ======================
     st.markdown("""
     <style>
-    /* Diminuir a margem superior no desktop */
-    .block-container { padding-top: 0.2rem !important; }
-
+    .block-container { padding-top: 0.5rem !important; }
     header[data-testid="stHeader"] {visibility: hidden;}
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-            
-    /* Cabeçalho centralizado (logo em cima, título embaixo) */
-    .header-col {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        background-color:#004D26;
-        padding:10px;
-        border-radius:8px;
-    }
-    .header-col img {
-        width: 200px;
-        margin-bottom: 8px;
+
+    /* ===== Desktop (logo à direita, título central) ===== */
+    .header-row {
+        display:flex; align-items:center; justify-content:space-between;
+        background-color:#004D26; padding:8px; border-radius:8px;
     }
     .app-title {
-        color:#fff;
-        font-weight:800;
-        font-size:36px;
-        text-align:center;
+        flex:1; text-align:center; color:#fff; font-weight:800; font-size:36px;
     }
 
-    /* ===== Responsividade para celular ===== */
+    /* ===== Mobile (logo em cima, título embaixo, ambos centralizados) ===== */
     @media (max-width: 768px) {
-        .header-col img { width: 120px !important; }
-        .app-title { font-size: 22px !important; }
-        h2, h3, h4 { font-size: 16px !important; }
+        .header-row {
+            flex-direction: column !important;
+            justify-content: center !important;
+            text-align: center !important;
+        }
+        .header-row img {
+            margin-bottom: 8px !important;
+            width: 120px !important;
+        }
+        .app-title {
+            font-size: 22px !important;
+        }
+        h2, h3, h4 {
+            font-size: 16px !important;
+        }
         .stDataFrame { font-size: 12px !important; }
     }
     </style>
@@ -90,9 +89,9 @@ else:
     # ======================
     st.markdown(
         """
-        <div class="header-col">
-            <img src="https://raw.githubusercontent.com/leonciolopes2528/fichas-atendimento-app/main/Logo-Branca.png">
+        <div class="header-row">
             <div class="app-title">Fichas de Atendimento - Gabinete Vereador Leôncio Lopes</div>
+            <img src="https://raw.githubusercontent.com/leonciolopes2528/fichas-atendimento-app/main/Logo-Branca.png" width="220">
         </div>
         """,
         unsafe_allow_html=True
@@ -157,13 +156,20 @@ else:
         return sty
 
     # ======================
+    # DEFINIR ALTURA DA TABELA CONFORME TAMANHO DA TELA
+    # ======================
+    is_mobile = st.session_state.get("is_mobile", False)
+    # Truque: detectar largura da janela via Streamlit JS (componente custom pode ser adicionado se precisar mais robusto)
+    table_height = 250 if is_mobile else 400
+
+    # ======================
     # EXIBIR TABELA PRINCIPAL
     # ======================
     st.subheader("📌 Fichas de Atendimento")
     st.dataframe(
         make_styler(df),
         use_container_width=True,
-        height=400
+        height=table_height
     )
 
     # ======================
@@ -181,7 +187,7 @@ else:
         st.dataframe(
             make_styler(filtrado),
             use_container_width=True,
-            height=400
+            height=table_height
         )
 
     # Botão de logout

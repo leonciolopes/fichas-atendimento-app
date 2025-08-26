@@ -83,6 +83,8 @@ else:
     url = "https://docs.google.com/spreadsheets/d/1TU9o9bgZPfZ-aKrxfgUqG03jTZOM3mWl0CCLn5SfwO0/export?format=csv&gid=0"
     df = pd.read_csv(url)
 
+    st.write("🔎 Colunas encontradas:", df.columns.tolist())
+
     # ======================
     # FILTRAR COLUNAS DE INTERESSE
     # ======================
@@ -92,7 +94,7 @@ else:
     "Rua": "Rua",
     "Número": "Número",
     "Bairro": "Bairro",
-    "Área da Demanda": "Área da demanda",
+    "Área da Demanda": "Área da Demanda",
     "Resumo da Demanda": "Resumo da Demanda",
     "Servidor Responsável": "Servidor Responsável",
     "Situação da Demanda": "Situação da Demanda",

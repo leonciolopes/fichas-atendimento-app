@@ -150,7 +150,7 @@ else:
     # ======================
     # RENDER HTML (garantir rolagem + sem índice)
     # ======================
-    def render_table_html(styler: pd.io.formats.style.Styler, width_px=1200, height_px=600):
+    def render_table_html(styler, width_px=1200, height_px=600):
         html = styler.to_html()
         st.markdown(
             f"""

@@ -132,11 +132,11 @@ else:
             if "solucionado" in v:   return "background-color:#33cc33;color:white;font-weight:bold; text-align:center;"
         return "text-align:center;"
 
-    def make_styler(df_in: pd.DataFrame) -> pd.io.formats.style.Styler:
+    def make_styler(df_in: pd.DataFrame):
         sty = df_in.style
         # centraliza cabeçalho e células
         sty = sty.set_properties(**{"text-align": "center"}) \
-                 .set_table_styles([{"selector": "th", "props": [("text-align", "center")]}])
+             .set_table_styles([{"selector": "th", "props": [("text-align", "center")]}])
         # aplica cores na situação (se existir)
         if "Situação da Demanda" in df_in.columns:
             sty = sty.applymap(highlight_situacao, subset=["Situação da Demanda"])
@@ -194,13 +194,34 @@ else:
         filtrado = df[df[coluna].astype(str).str.contains(valor, case=False, na=False)]
         render_table_html(make_styler(filtrado), width_px=1200, height_px=600)
 
-    # ======================
-    # FOOTER PROFISSIONAL
-    # ======================
-    st.markdown(
-        "<div class='footer'>📌 Desenvolvido para o Gabinete Vereador Leôncio Lopes — Todos os direitos reservados</div>",
-        unsafe_allow_html=True
-    )
+        # ======================
+        # FOOTER PROFISSIONAL ESTILO INSTITUCIONAL
+        # ======================
+        st.markdown(
+            """
+            <style>
+            .custom-footer {
+                background-color: #003366; /* azul escuro */
+                padding: 15px 0;
+                text-align: center;
+                color: white;
+                font-size: 14px;
+                margin-top: 40px;
+            }
+            .custom-footer a {
+                color: #66b2ff; /* azul claro para links */
+                text-decoration: none;
+                font-weight: bold;
+            }
+            .custom-footer a:hover {
+                text-decoration: underline;
+            }
+            </style>
 
-    # Botão de logout
-    authenticator.logout("Sair", "sidebar")
+            <div class="custom-footer">
+                © 2025 Gabinete Vereador <b>Leôncio Lopes</b> da Câmara Municipal de Sete Lagoas.<br> 
+                Todos os direitos reservados. 
+            </div>
+            """,
+            unsafe_allow_html=True
+        )

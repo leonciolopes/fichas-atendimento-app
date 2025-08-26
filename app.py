@@ -31,7 +31,7 @@ authenticator = stauth.Authenticate(
 )
 
 # Tela de login na sidebar
-name, auth_status, username = authenticator.login(location="sidebar")
+name, auth_status, username = authenticator.login("Login", "sidebar")
 
 # ======================
 # VERIFICAÇÃO DE LOGIN

@@ -57,12 +57,6 @@ else:
         flex:1; text-align:center; color:#fff; font-weight:800; font-size:28px;
     }
     h2, h3, h4 { color:#fff !important; font-weight:800 !important; }
-
-    /* Footer */
-    .footer {
-        text-align:center; color:white; padding:12px; margin-top:30px;
-        background-color:#002d17; border-radius:8px; font-size:14px;
-    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -91,6 +85,7 @@ else:
     # FILTRAR/RENOMEAR COLUNAS
     # ======================
     mapeamento = {
+        "Data de Atendimento": "Data de Atendimento",
         "Nome Completo": "Nome",
         "Telefone (31)9xxxx-xxxx": "Telefone",
         "Endereço": "Rua",
@@ -100,29 +95,30 @@ else:
         "Resumo da Demanda": "Resumo da Demanda",
         "Servidor Responsável": "Servidor Responsável",
         "Situação da Demanda": "Situação da Demanda",
-        "Descrição da Situação": "Descrição da Situação"
-        # "Data da Atualização" já está correto no CSV
+        "Descrição da Situação": "Descrição da Situação",
+        "Data da Atualização": "Data da Atualização"
     }
 
     existentes = [c for c in mapeamento if c in df.columns]
-    if "Data da Atualização" in df.columns:
-        existentes.append("Data da Atualização")
-
     df = df[existentes].rename(columns=mapeamento)
 
-    ordem = [
+    # ======================
+    # ORDENAR PELA DATA DE ATENDIMENTO
+    # ======================
+    if "Data de Atendimento" in df.columns:
+        df["Data de Atendimento"] = pd.to_datetime(df["Data de Atendimento"], errors="coerce", dayfirst=True)
+        df = df.sort_values("Data de Atendimento", ascending=True)
+
+    # Colunas visíveis (sem Data de Atendimento)
+    colunas_visiveis = [
         "Nome", "Telefone", "Rua", "Número", "Bairro",
         "Área da Demanda", "Resumo da Demanda", "Servidor Responsável",
         "Situação da Demanda", "Descrição da Situação", "Data da Atualização"
     ]
-    df = df[[c for c in ordem if c in df.columns]]
-
-    if "Data da Atualização" in df.columns:
-        df["Data da Atualização"] = pd.to_datetime(df["Data da Atualização"], errors="coerce", dayfirst=True)
-        df = df.sort_values("Data da Atualização", ascending=False)
+    df = df[[c for c in colunas_visiveis if c in df.columns]]
 
     # ======================
-    # COLORAÇÃO + CENTRALIZAÇÃO (Styler)
+    # COLORAÇÃO + CENTRALIZAÇÃO
     # ======================
     def highlight_situacao(val):
         if isinstance(val, str):
@@ -134,38 +130,25 @@ else:
 
     def make_styler(df_in: pd.DataFrame):
         sty = df_in.style
-        # centraliza cabeçalho e células
         sty = sty.set_properties(**{"text-align": "center"}) \
-             .set_table_styles([{"selector": "th", "props": [("text-align", "center")]}])
-        # aplica cores na situação (se existir)
+                 .set_table_styles([{"selector": "th", "props": [("text-align", "center")]}])
         if "Situação da Demanda" in df_in.columns:
             sty = sty.applymap(highlight_situacao, subset=["Situação da Demanda"])
-        # esconde o índice (linha 0)
         try:
             sty = sty.hide(axis="index")  # pandas >= 1.4
         except Exception:
-            sty = sty.hide_index()        # fallback para pandas antigos
+            sty = sty.hide_index()
         return sty
-
-    # ======================
-    # RENDER HTML (garantir rolagem + sem índice)
-    # ======================
-    def render_table_html(styler, width_px=1200, height_px=600):
-        html = styler.to_html()
-        st.markdown(
-            f"""
-            <div style="width:{width_px}px; height:{height_px}px; overflow:auto; border-radius:6px; background: white;">
-                {html}
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
 
     # ======================
     # EXIBIR TABELA PRINCIPAL
     # ======================
-    st.subheader("📌 Fichas de Atendimento (simplificado)")
-    render_table_html(make_styler(df), width_px=1200, height_px=600)
+    st.subheader("Fichas de Atendimento")
+    st.dataframe(
+        make_styler(df),
+        use_container_width=True,
+        height=600
+    )
 
     # ======================
     # FILTROS
@@ -192,36 +175,46 @@ else:
 
     if valor:
         filtrado = df[df[coluna].astype(str).str.contains(valor, case=False, na=False)]
-        render_table_html(make_styler(filtrado), width_px=1200, height_px=600)
-
-        # ======================
-        # FOOTER PROFISSIONAL ESTILO INSTITUCIONAL
-        # ======================
-        st.markdown(
-            """
-            <style>
-            .custom-footer {
-                background-color: #003366; /* azul escuro */
-                padding: 15px 0;
-                text-align: center;
-                color: white;
-                font-size: 14px;
-                margin-top: 40px;
-            }
-            .custom-footer a {
-                color: #66b2ff; /* azul claro para links */
-                text-decoration: none;
-                font-weight: bold;
-            }
-            .custom-footer a:hover {
-                text-decoration: underline;
-            }
-            </style>
-
-            <div class="custom-footer">
-                © 2025 Gabinete Vereador <b>Leôncio Lopes</b> da Câmara Municipal de Sete Lagoas.<br> 
-                Todos os direitos reservados. 
-            </div>
-            """,
-            unsafe_allow_html=True
+        st.dataframe(
+            make_styler(filtrado),
+            use_container_width=True,
+            height=600
         )
+
+    # ======================
+    # FOOTER PROFISSIONAL ESTILO INSTITUCIONAL
+    # ======================
+    st.markdown(
+        """
+        <style>
+        .custom-footer {
+            position: relative;
+            bottom: 0;
+            width: 100%;
+            background-color: #003366; /* azul escuro */
+            padding: 15px 0;
+            text-align: center;
+            color: white;
+            font-size: 14px;
+            border-top: 2px solid #002244;
+        }
+        .custom-footer a {
+            color: #66b2ff; /* azul claro para links */
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .custom-footer a:hover {
+            text-decoration: underline;
+        }
+        </style>
+
+        <div class="custom-footer">
+            © 2025 Gabinete Vereador <b>Leôncio Lopes</b> da Câmara Municipal de Sete Lagoas. <br>
+            Todos os direitos reservados. 
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # Botão de logout
+    authenticator.logout("Sair", "sidebar")

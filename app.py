@@ -102,12 +102,9 @@ else:
     existentes = [c for c in mapeamento if c in df.columns]
     df = df[existentes].rename(columns=mapeamento)
 
-    # ======================
-    # ORDENAR PELA DATA DE ATENDIMENTO
-    # ======================
-    if "Data de Atendimento" in df.columns:
-        df["Data de Atendimento"] = pd.to_datetime(df["Data de Atendimento"], errors="coerce", dayfirst=True)
-        df = df.sort_values("Data de Atendimento", ascending=True)
+    # 🔹 Remover linhas sem Nome preenchido
+    if "Nome" in df.columns:
+        df = df[df["Nome"].notna() & (df["Nome"].str.strip() != "")]
 
     # Colunas visíveis (sem Data de Atendimento)
     colunas_visiveis = [
@@ -143,7 +140,7 @@ else:
     # ======================
     # EXIBIR TABELA PRINCIPAL
     # ======================
-    st.subheader("Fichas de Atendimento")
+    st.subheader("📌 Fichas de Atendimento")
     st.dataframe(
         make_styler(df),
         use_container_width=True,
@@ -157,19 +154,6 @@ else:
     col1, col2 = st.columns([1,2])
     with col1:
         coluna = st.selectbox("Selecione uma coluna para filtrar:", df.columns, index=0)
-
-    with col2:
-        if any(x in coluna.lower() for x in ["data"]):
-            dica = "📅 Digite a data no formato DD/MM/AAAA."
-        elif any(x in coluna.lower() for x in ["telefone", "cpf", "identidade"]):
-            dica = "🔢 Digite números ou parte do número."
-        elif "sexo" in coluna.lower():
-            dica = "⚧ Digite Masculino ou Feminino."
-        elif any(x in coluna.lower() for x in ["estado civil", "profissão", "bairro", "área da demanda", "servidor"]):
-            dica = "✏️ Digite parte do texto."
-        else:
-            dica = "✏️ Digite texto ou número presente na coluna."
-        st.caption(dica)
 
     valor = st.text_input(f"Digite um valor para filtrar em **{coluna}**:")
 
@@ -188,7 +172,7 @@ else:
         """
         <style>
         .custom-footer {
-            position: relative;
+            position: fixed;
             bottom: 0;
             width: 100%;
             background-color: #003366; /* azul escuro */

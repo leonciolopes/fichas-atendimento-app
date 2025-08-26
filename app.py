@@ -86,20 +86,23 @@ else:
     # ======================
     # FILTRAR COLUNAS DE INTERESSE
     # ======================
-    colunas_desejadas = [
-        "Nome",
-        "Telefone",
-        "Rua",
-        "Número",
-        "Bairro",
-        "Área da demanda",
-        "Resumo da Demanda",
-        "Servidor Responsável",
-        "Situação da Demanda",
-        "Descrição da Situação",
-        "Data da Atualização"
-    ]
-    df = df[[c for c in colunas_desejadas if c in df.columns]]  # garante que só pega colunas que existem
+    colunas_desejadas = {
+    "Nome Completo": "Nome",
+    "Telefone (31)9xxxx-xxxx": "Telefone",
+    "Rua": "Rua",
+    "Número": "Número",
+    "Bairro": "Bairro",
+    "Área da Demanda": "Área da demanda",
+    "Resumo da Demanda": "Resumo da Demanda",
+    "Servidor Responsável": "Servidor Responsável",
+    "Situação da Demanda": "Situação da Demanda",
+    "Descrição da Situação": "Descrição da Situação",
+    "Data da Atualização": "Data da Atualização"
+    }
+
+    # Seleciona apenas colunas existentes e renomeia
+    df = df[[c for c in colunas_desejadas.keys() if c in df.columns]]
+    df = df.rename(columns=colunas_desejadas)
 
     # ======================
     # COLORAÇÃO DA SITUAÇÃO

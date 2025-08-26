@@ -167,7 +167,11 @@ else:
     # EXIBIR TABELA PRINCIPAL
     # ======================
     st.subheader("📌 Fichas de Atendimento")
-    st.markdown(make_styler(df).to_html(), unsafe_allow_html=True)
+    st.dataframe(
+        make_styler(df),
+        use_container_width=True,
+        height=600
+    )
 
     # ======================
     # FILTROS
@@ -181,7 +185,11 @@ else:
 
     if valor:
         filtrado = df[df[coluna].astype(str).str.contains(valor, case=False, na=False)]
-        st.markdown(make_styler(filtrado).to_html(), unsafe_allow_html=True)
+        st.dataframe(
+            make_styler(filtrado),
+            use_container_width=True,
+            height=600
+        )
 
     # ======================
     # FOOTER PROFISSIONAL ESTILO INSTITUCIONAL

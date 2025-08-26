@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import streamlit_authenticator as stauth
+from streamlit_js_eval import streamlit_js_eval
 
 # ======================
 # CONFIGURAÇÃO DA PÁGINA
@@ -31,18 +32,23 @@ authenticator = stauth.Authenticate(
 )
 
 # Tela de login na sidebar
-name, auth_status, username = authenticator.login(location="sidebar")
+name, auth_status = authenticator.login(location="sidebar")
 
 # ======================
 # VERIFICAÇÃO DE LOGIN
 # ======================
 if auth_status is False:
     st.error("Usuário ou senha incorretos ❌")
-
 elif auth_status is None:
     st.warning("Digite usuário e senha para continuar 🔑")
-
 else:
+    # ======================
+    # DETECTAR TAMANHO DA TELA
+    # ======================
+    width = streamlit_js_eval(js_expressions="window.innerWidth", key="SCR")
+    is_mobile = width is not None and width < 768
+    table_height = 250 if is_mobile else 400
+
     # ======================
     # CSS EXTRA
     # ======================
@@ -53,7 +59,6 @@ else:
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
 
-    /* ===== Desktop (logo à direita, título central) ===== */
     .header-row {
         display:flex; align-items:center; justify-content:space-between;
         background-color:#004D26; padding:8px; border-radius:8px;
@@ -62,7 +67,6 @@ else:
         flex:1; text-align:center; color:#fff; font-weight:800; font-size:36px;
     }
 
-    /* ===== Mobile (logo em cima, título embaixo, ambos centralizados) ===== */
     @media (max-width: 768px) {
         .header-row {
             flex-direction: column !important;
@@ -73,12 +77,8 @@ else:
             margin-bottom: 8px !important;
             width: 120px !important;
         }
-        .app-title {
-            font-size: 22px !important;
-        }
-        h2, h3, h4 {
-            font-size: 16px !important;
-        }
+        .app-title { font-size: 22px !important; }
+        h2, h3, h4 { font-size: 16px !important; }
         .stDataFrame { font-size: 12px !important; }
     }
     </style>
@@ -156,13 +156,6 @@ else:
         return sty
 
     # ======================
-    # DEFINIR ALTURA DA TABELA CONFORME TAMANHO DA TELA
-    # ======================
-    is_mobile = st.session_state.get("is_mobile", False)
-    # Truque: detectar largura da janela via Streamlit JS (componente custom pode ser adicionado se precisar mais robusto)
-    table_height = 250 if is_mobile else 400
-
-    # ======================
     # EXIBIR TABELA PRINCIPAL
     # ======================
     st.subheader("📌 Fichas de Atendimento")
@@ -176,10 +169,7 @@ else:
     # FILTROS
     # ======================
     st.subheader("🔎 Filtro de Dados")
-    col1, col2 = st.columns([1,2])
-    with col1:
-        coluna = st.selectbox("Selecione uma coluna para filtrar:", df.columns, index=0)
-
+    coluna = st.selectbox("Selecione uma coluna para filtrar:", df.columns, index=0)
     valor = st.text_input(f"Digite um valor para filtrar em **{coluna}**:")
 
     if valor:
@@ -190,5 +180,4 @@ else:
             height=table_height
         )
 
-    # Botão de logout
     authenticator.logout("Sair", "sidebar")

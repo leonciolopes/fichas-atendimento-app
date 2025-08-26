@@ -48,6 +48,13 @@ else:
     # ======================
     st.markdown("""
     <style>
+    .block-container {
+        padding-top: 1rem !important;
+    }
+
+    .st-emotion-cache-h4xjwg.egzxvld1 {visibility: hidden;} 
+    .st-emotion-cache-uhkwx6 {display: none;}
+            
     .header-row {
         display:flex; align-items:center; justify-content:space-between;
         background-color:#004D26; padding:5px; border-radius:8px;

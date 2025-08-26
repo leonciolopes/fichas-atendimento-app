@@ -44,34 +44,43 @@ elif auth_status is None:
 
 else:
     # ======================
-    # CSS EXTRA (responsivo estilo desktop reduzido no mobile)
+    # CSS EXTRA
     # ======================
     st.markdown("""
     <style>
-    .block-container { padding-top: 1rem !important; }
+    /* Diminuir a margem superior no desktop */
+    .block-container { padding-top: 0.2rem !important; }
+
     header[data-testid="stHeader"] {visibility: hidden;}
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
             
-    .header-row {
-        display:flex; align-items:center; justify-content:space-between;
-        background-color:#004D26; padding:5px; border-radius:8px;
+    /* Cabeçalho centralizado (logo em cima, título embaixo) */
+    .header-col {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background-color:#004D26;
+        padding:10px;
+        border-radius:8px;
     }
-                
+    .header-col img {
+        width: 200px;
+        margin-bottom: 8px;
+    }
     .app-title {
-        flex:1; text-align:center; color:#fff; font-weight:800; font-size:40px;
-    }
-
-    h2, h3, h4 {
-        color:#fff !important; font-weight:800 !important;
+        color:#fff;
+        font-weight:800;
+        font-size:36px;
+        text-align:center;
     }
 
     /* ===== Responsividade para celular ===== */
     @media (max-width: 768px) {
+        .header-col img { width: 120px !important; }
         .app-title { font-size: 22px !important; }
-        .header-row img { width: 120px !important; }
-        h2, h3, h4 { font-size: 16px !important; }  /* subtítulos menores */
-        .stDataFrame { font-size: 12px !important; } /* tabela fonte menor */
+        h2, h3, h4 { font-size: 16px !important; }
+        .stDataFrame { font-size: 12px !important; }
     }
     </style>
     """, unsafe_allow_html=True)
@@ -81,9 +90,9 @@ else:
     # ======================
     st.markdown(
         """
-        <div class="header-row">
+        <div class="header-col">
+            <img src="https://raw.githubusercontent.com/leonciolopes2528/fichas-atendimento-app/main/Logo-Branca.png">
             <div class="app-title">Fichas de Atendimento - Gabinete Vereador Leôncio Lopes</div>
-            <img src="https://raw.githubusercontent.com/leonciolopes2528/fichas-atendimento-app/main/Logo-Branca.png" width="250">
         </div>
         """,
         unsafe_allow_html=True
@@ -154,7 +163,7 @@ else:
     st.dataframe(
         make_styler(df),
         use_container_width=True,
-        height=400  # 🔹 tabela mais baixa (menos linhas visíveis)
+        height=400
     )
 
     # ======================
@@ -172,7 +181,7 @@ else:
         st.dataframe(
             make_styler(filtrado),
             use_container_width=True,
-            height=400  # 🔹 também reduzido
+            height=400
         )
 
     # Botão de logout

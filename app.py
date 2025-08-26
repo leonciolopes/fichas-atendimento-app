@@ -52,8 +52,9 @@ else:
         padding-top: 1rem !important;
     }
 
-    .st-emotion-cache-h4xjwg.egzxvld1 {visibility: hidden;} 
-    .st-emotion-cache-uhkwx6 {display: none;}
+    header[data-testid="stHeader"] {visibility: hidden;}
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
             
     .header-row {
         display:flex; align-items:center; justify-content:space-between;

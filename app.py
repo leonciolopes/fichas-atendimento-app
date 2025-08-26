@@ -16,9 +16,9 @@ credentials = {
             "name": "Admin",
             "password": st.secrets["passwords"]["admin"],
         },
-        "leoncio": {
+        "gabinete": {
             "name": "Gabinete",
-            "password": st.secrets["passwords"]["leoncio"],
+            "password": st.secrets["passwords"]["gabinete"],
         },
     }
 }

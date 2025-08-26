@@ -88,7 +88,7 @@ else:
     # ======================
     # FILTRAR COLUNAS DE INTERESSE
     # ======================
-    colunas_mapeamento = {
+    mapeamento = {
     "Nome Completo": "Nome",
     "Telefone (31)9xxxx-xxxx": "Telefone",
     "Endereço": "Rua",
@@ -99,11 +99,25 @@ else:
     "Servidor Responsável": "Servidor Responsável",
     "Situação da Demanda": "Situação da Demanda",
     "Descrição da Situação": "Descrição da Situação",
-    "Data da Atualização": "Data da Atualização"
+    # "Data da Atualização" já está com o nome final, então não precisa renomear
     }
 
-    df = df[[c for c in colunas_mapeamento.keys() if c in df.columns]]
-    df = df.rename(columns=colunas_mapeamento)
+    # pega somente as colunas que existem + garante Data da Atualização
+    existentes = [c for c in mapeamento if c in df.columns]
+    if "Data da Atualização" in df.columns:
+        existentes.append("Data da Atualização")
+
+    df = df[existentes].rename(columns=mapeamento)
+
+    # ordem final desejada
+    ordem = [
+        "Nome", "Telefone", "Rua", "Número", "Bairro",
+        "Área da Demanda", "Resumo da Demanda", "Servidor Responsável",
+        "Situação da Demanda", "Descrição da Situação", "Data da Atualização"
+    ]
+    
+    df = df[[c for c in ordem if c in df.columns]]
+    
     # ======================
     # COLORAÇÃO DA SITUAÇÃO
     # ======================

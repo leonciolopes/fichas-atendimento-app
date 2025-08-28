@@ -185,6 +185,21 @@ else:
         return sty
 
     # ======================
+    # FILTROS
+    # ======================
+    st.subheader("🔎 Filtro de Dados")
+    coluna = st.selectbox("Selecione uma coluna para filtrar:", df.columns, index=0)
+    valor = st.text_input(f"Digite um valor para filtrar em **{coluna}**:")
+
+    if valor:
+        filtrado = df[df[coluna].astype(str).str.contains(valor, case=False, na=False)]
+        st.dataframe(
+            make_styler(filtrado),
+            use_container_width=True,
+            height=table_height
+        )
+
+    # ======================
     # EXIBIR TABELA
     # ======================
     st.subheader("📌 Fichas de Atendimento")
@@ -199,21 +214,6 @@ else:
         use_container_width=True,
         height=table_height
     )
-
-    # ======================
-    # FILTROS
-    # ======================
-    st.subheader("🔎 Filtro de Dados")
-    coluna = st.selectbox("Selecione uma coluna para filtrar:", df.columns, index=0)
-    valor = st.text_input(f"Digite um valor para filtrar em **{coluna}**:")
-
-    if valor:
-        filtrado = df[df[coluna].astype(str).str.contains(valor, case=False, na=False)]
-        st.dataframe(
-            make_styler(filtrado),
-            use_container_width=True,
-            height=table_height
-        )
 
     # ======================
     # FOOTER

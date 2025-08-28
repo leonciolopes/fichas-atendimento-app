@@ -48,15 +48,11 @@ else:
     # ======================
     st.markdown("""
     <style>
-    /* Remove menu e footer nativo do Streamlit */
     header[data-testid="stHeader"] {visibility: hidden;}
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-
-    /* Margem superior menor no desktop */
     .block-container { padding-top: 0.5rem !important; }
 
-    /* Cabeçalho - versão desktop */
     .header-row {
         display:flex; align-items:center; justify-content:space-between;
         background-color:#004D26; padding:8px; border-radius:8px;
@@ -65,10 +61,8 @@ else:
         flex:1; text-align:center; color:#fff; font-weight:800; font-size:38px;
     }
 
-    /* Subtítulos */
     h2, h3, h4 { color:#fff !important; font-weight:800 !important; }
 
-    /* Estilo da tabela */
     table {
         border-collapse: collapse;
         margin: auto;
@@ -84,25 +78,12 @@ else:
         font-weight: bold;
     }
 
-    /* ========================
-       Responsividade MOBILE
-       ======================== */
+    /* MOBILE */
     @media (max-width: 768px) {
-        .header-row {
-            flex-direction: column;
-            text-align: center;
-        }
-        .app-title {
-            font-size: 24px !important;
-            margin-top: 10px;
-        }
-        .header-row img {
-            width: 160px !important;
-            margin-bottom: 5px;
-        }
-        h2, h3, h4 {
-            font-size: 18px !important;
-        }
+        .header-row { flex-direction: column; text-align: center; }
+        .app-title { font-size: 24px !important; margin-top: 10px; }
+        .header-row img { width: 160px !important; margin-bottom: 5px; }
+        h2, h3, h4 { font-size: 18px !important; }
     }
     </style>
     """, unsafe_allow_html=True)
@@ -128,9 +109,6 @@ else:
     df = pd.read_csv(url)
     df.columns = df.columns.str.replace(r"\s+", " ", regex=True).str.strip()
 
-    # ======================
-    # FILTRAR/RENOMEAR COLUNAS
-    # ======================
     mapeamento = {
         "Data de Atendimento": "Data de Atendimento",
         "Nome Completo": "Nome",
@@ -149,11 +127,9 @@ else:
     existentes = [c for c in mapeamento if c in df.columns]
     df = df[existentes].rename(columns=mapeamento)
 
-    # 🔹 Remover linhas sem Nome preenchido
     if "Nome" in df.columns:
         df = df[df["Nome"].notna() & (df["Nome"].str.strip() != "")]
 
-    # Colunas visíveis
     colunas_visiveis = [
         "Nome", "Telefone", "Rua", "Número", "Bairro",
         "Área da Demanda", "Resumo da Demanda", "Servidor Responsável",
@@ -162,7 +138,7 @@ else:
     df = df[[c for c in colunas_visiveis if c in df.columns]]
 
     # ======================
-    # COLORAÇÃO + CENTRALIZAÇÃO
+    # FUNÇÕES DE ESTILO
     # ======================
     def highlight_situacao(val):
         if isinstance(val, str):
@@ -173,40 +149,34 @@ else:
         return "text-align:center;"
 
     def make_styler(df_in: pd.DataFrame):
-        sty = df_in.style
-        sty = sty.set_properties(**{"text-align": "center"}) \
-                 .set_table_styles([{"selector": "th", "props": [("text-align", "center")]}])
+        sty = df_in.style.set_properties(**{"text-align": "center"}) \
+                         .set_table_styles([{"selector": "th", "props": [("text-align", "center")]}])
         if "Situação da Demanda" in df_in.columns:
             sty = sty.applymap(highlight_situacao, subset=["Situação da Demanda"])
         try:
-            sty = sty.hide(axis="index")  # pandas >= 1.4
+            sty = sty.hide(axis="index")
         except Exception:
             sty = sty.hide_index()
         return sty
 
     # ======================
-    # FILTROS
+    # FILTROS (antes da tabela)
     # ======================
     st.subheader("🔎 Filtro de Dados")
     coluna = st.selectbox("Selecione uma coluna para filtrar:", df.columns, index=0)
     valor = st.text_input(f"Digite um valor para filtrar em **{coluna}**:")
 
+    # Aplicar filtro diretamente na tabela principal
     if valor:
-        filtrado = df[df[coluna].astype(str).str.contains(valor, case=False, na=False)]
-        st.dataframe(
-            make_styler(filtrado),
-            use_container_width=True,
-            height=table_height
-        )
+        df = df[df[coluna].astype(str).str.contains(valor, case=False, na=False)]
 
     # ======================
-    # EXIBIR TABELA
+    # EXIBIR TABELA (já filtrada)
     # ======================
     st.subheader("📌 Fichas de Atendimento")
 
-    # 🔹 Detectar se é mobile
+    # Ajustar altura da tabela (mobile vs desktop)
     is_mobile = st.session_state.get("is_mobile", False)
-    # Ajuste de altura: menos linhas no mobile
     table_height = 600 if not is_mobile else 300
 
     st.dataframe(
@@ -225,7 +195,7 @@ else:
             position: relative;
             bottom: 0;
             width: 100%;
-            background-color: #004D26; /* verde escuro */
+            background-color: #004D26;
             padding: 15px 0;
             text-align: center;
             color: white;
@@ -233,7 +203,6 @@ else:
             border-top: 2px solid #003300;
         }
         </style>
-
         <div class="custom-footer">
             © 2025 Gabinete Vereador <b>Leôncio Lopes</b> da Câmara Municipal de Sete Lagoas. <br>
             Todos os direitos reservados. 
@@ -242,5 +211,4 @@ else:
         unsafe_allow_html=True
     )
 
-    # Botão de logout
     authenticator.logout("Sair", "sidebar")

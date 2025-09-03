@@ -88,21 +88,23 @@ else:
     )
 
     # ======================
-    # SELEÇÃO DA ABA
+    # FILTRO DE ABA (radio = miniquadradinho único)
     # ======================
-    abas = {
-        "Atendimentos Gerais": "0",      # gid=0
-        "Educação": "123456789",         # exemplo gid
-        "Saúde": "987654321",            # exemplo gid
-        "Infraestrutura": "555666777",   # exemplo gid
-    }
+    st.subheader("📑 Escolha a aba da planilha")
+    aba_selecionada = st.radio(
+        "Selecione a categoria:",
+        ["Atendimento", "Demandas Oftalmológicas"]
+    )
 
-    aba_selecionada = st.selectbox("📑 Selecione a aba da planilha:", list(abas.keys()))
+    # Definir GID conforme aba selecionada
+    if aba_selecionada == "Atendimento":
+        gid = "0"   # substitua pelo gid real
+    else:
+        gid = "123456789"  # substitua pelo gid real da aba "Demandas Oftalmológicas"
 
     # ======================
     # CARREGAR PLANILHA COM BASE NA ABA
     # ======================
-    gid = abas[aba_selecionada]
     url = f"https://docs.google.com/spreadsheets/d/1TU9o9bgZPfZ-aKrxfgUqG03jTZOM3mWl0CCLn5SfwO0/export?format=csv&gid={gid}"
     df = pd.read_csv(url)
     df.columns = df.columns.str.replace(r"\s+", " ", regex=True).str.strip()
@@ -158,18 +160,18 @@ else:
         return sty
 
     # ======================
-    # FILTRO GERAL (texto)
+    # FILTRO DE TEXTO
     # ======================
     st.subheader("🔎 Filtro de Dados")
     coluna = st.selectbox("Selecione uma coluna para filtrar:", df.columns, index=0)
     valor = st.text_input(f"Digite um valor para filtrar em **{coluna}**:")
 
     # ======================
-    # FILTRO SITUAÇÃO DA DEMANDA
+    # FILTRO SITUAÇÃO DA DEMANDA (multiselect = miniquadradinhos múltiplos)
     # ======================
     st.subheader("📌 Situação da Demanda")
     opcoes_situacao = ["Solucionado", "Em Andamento", "Prejudicado"]
-    selecionados = st.multiselect("Selecione uma ou mais situações:", opcoes_situacao)
+    selecionados = st.multiselect("Selecione as situações:", opcoes_situacao)
 
     # Aplicar filtros
     if valor:

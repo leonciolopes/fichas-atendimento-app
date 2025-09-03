@@ -96,12 +96,12 @@ else:
     st.subheader("📑 Selecione a categoria:")
     aba_selecionada = st.radio(
         "",
-        ["Atendimento", "Demandas Oftalmológicas"],
+        ["Demandas Gerais", "Demandas Oftalmológicas"],
         horizontal=True
     )
 
     # Definir GID conforme aba selecionada
-    if aba_selecionada == "Atendimento":
+    if aba_selecionada == "Demandas Gerais":
         gid = "0"
     else:
         gid = "1946301846"

@@ -8,7 +8,7 @@ import streamlit_authenticator as stauth
 st.set_page_config(page_title="Fichas de Atendimento", layout="wide")
 
 # ======================
-# LOGIN
+# LOGIN (usa os Secrets do Streamlit Cloud)
 # ======================
 credentials = {
     "usernames": {
@@ -30,7 +30,7 @@ authenticator = stauth.Authenticate(
     cookie_expiry_days=st.secrets["cookie"]["expiry_days"]
 )
 
-# Tela de login
+# Tela de login na sidebar
 name, auth_status, username = authenticator.login(location="sidebar")
 
 # ======================
@@ -90,9 +90,8 @@ else:
     # ======================
     # FILTRO DE ABA (radio = miniquadradinho único)
     # ======================
-    st.subheader("📑 Escolha a aba da planilha")
+    st.subheader("📑 Selecione a categoria:")
     aba_selecionada = st.radio(
-        "Selecione a categoria:",
         ["Atendimento", "Demandas Oftalmológicas"]
     )
 
@@ -100,7 +99,7 @@ else:
     if aba_selecionada == "Atendimento":
         gid = "0"   # substitua pelo gid real
     else:
-        gid = "123456789"  # substitua pelo gid real da aba "Demandas Oftalmológicas"
+        gid = "1"  # substitua pelo gid real da aba "Demandas Oftalmológicas"
 
     # ======================
     # CARREGAR PLANILHA COM BASE NA ABA
@@ -109,6 +108,9 @@ else:
     df = pd.read_csv(url)
     df.columns = df.columns.str.replace(r"\s+", " ", regex=True).str.strip()
 
+    # ======================
+    # FILTRAR/RENOMEAR COLUNAS
+    # ======================
     mapeamento = {
         "Data de Atendimento": "Data de Atendimento",
         "Nome Completo": "Nome",
@@ -167,18 +169,27 @@ else:
     valor = st.text_input(f"Digite um valor para filtrar em **{coluna}**:")
 
     # ======================
-    # FILTRO SITUAÇÃO DA DEMANDA (multiselect = miniquadradinhos múltiplos)
+    # FILTRO SITUAÇÃO DA DEMANDA (checkboxes)
     # ======================
     st.subheader("📌 Situação da Demanda")
-    opcoes_situacao = ["Solucionado", "Em Andamento", "Prejudicado"]
-    selecionados = st.multiselect("Selecione as situações:", opcoes_situacao)
+    chk_solucionado = st.checkbox("Solucionado")
+    chk_andamento = st.checkbox("Em Andamento")
+    chk_prejudicado = st.checkbox("Prejudicado")
+
+    filtros = []
+    if chk_solucionado:
+        filtros.append("solucionado")
+    if chk_andamento:
+        filtros.append("em andamento")
+    if chk_prejudicado:
+        filtros.append("prejudicado")
 
     # Aplicar filtros
     if valor:
         df = df[df[coluna].astype(str).str.contains(valor, case=False, na=False)]
 
-    if selecionados and "Situação da Demanda" in df.columns:
-        df = df[df["Situação da Demanda"].str.lower().isin([s.lower() for s in selecionados])]
+    if filtros and "Situação da Demanda" in df.columns:
+        df = df[df["Situação da Demanda"].str.lower().isin(filtros)]
 
     # ======================
     # EXIBIR TABELA

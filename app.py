@@ -113,7 +113,7 @@ else:
         gid = "0"
     elif aba_selecionada == "Demandas Oftalmológicas":
         gid = "27665281"
-    else
+    else:
         gid = "1946301846"
 
     # ======================

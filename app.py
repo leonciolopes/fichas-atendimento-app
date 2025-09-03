@@ -62,17 +62,25 @@ else:
     }
     h2, h3, h4 { color:#fff !important; font-weight:800 !important; }
 
-    /* MOBILE */
+    /* Ajusta radios mais próximos do título */
+    div[data-baseweb="radio"] {
+        margin-top: -10px !important;
+        margin-bottom: -10px !important;
+    }
+
+    /* Situação da Demanda responsiva */
+    .filtros-demanda {
+        display: flex;
+        gap: 20px;
+    }
     @media (max-width: 768px) {
         .header-row { flex-direction: column; text-align: center; }
         .app-title { font-size: 22px !important; margin-top: 10px; }
         .header-row img { width: 150px !important; margin-bottom: 5px; }
         h2, h3, h4 { font-size: 16px !important; }
-        .filtros-demanda {flex-direction: column !important; align-items: flex-start !important;}
-    }
 
-    /* Ajuste do espaço entre título e opções */
-    .stRadio > label {margin-bottom: -5px !important;}
+        .filtros-demanda {flex-direction: column; gap: 5px;}
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -91,13 +99,14 @@ else:
     )
 
     # ======================
-    # FILTRO DE CATEGORIA (radio em linha)
+    # FILTRO DE CATEGORIA
     # ======================
     st.subheader("📑 Selecione a categoria:")
     aba_selecionada = st.radio(
-        "",
-        ["Demandas Gerais", "Demandas Oftalmológicas"],
-        horizontal=True
+        label="",
+        options=["Demandas Gerais", "Demandas Oftalmológicas"],
+        horizontal=True,
+        label_visibility="collapsed"
     )
 
     # Definir GID conforme aba selecionada
@@ -107,7 +116,7 @@ else:
         gid = "1946301846"
 
     # ======================
-    # CARREGAR PLANILHA COM BASE NA ABA
+    # CARREGAR PLANILHA
     # ======================
     url = f"https://docs.google.com/spreadsheets/d/1TU9o9bgZPfZ-aKrxfgUqG03jTZOM3mWl0CCLn5SfwO0/export?format=csv&gid={gid}"
     df = pd.read_csv(url)
@@ -174,16 +183,14 @@ else:
     valor = st.text_input(f"Digite um valor para filtrar em **{coluna}**:")
 
     # ======================
-    # FILTRO SITUAÇÃO DA DEMANDA (checkboxes responsivos)
+    # FILTRO SITUAÇÃO DA DEMANDA
     # ======================
-    st.subheader("📌 Situação da Demanda")
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        chk_solucionado = st.checkbox("Solucionado")
-    with col2:
-        chk_andamento = st.checkbox("Em Andamento")
-    with col3:
-        chk_prejudicado = st.checkbox("Prejudicado")
+    st.subheader("ℹ️ Situação da Demanda")
+    st.markdown('<div class="filtros-demanda">', unsafe_allow_html=True)
+    chk_solucionado = st.checkbox("Solucionado")
+    chk_andamento = st.checkbox("Em Andamento")
+    chk_prejudicado = st.checkbox("Prejudicado")
+    st.markdown('</div>', unsafe_allow_html=True)
 
     filtros = []
     if chk_solucionado:
@@ -193,7 +200,6 @@ else:
     if chk_prejudicado:
         filtros.append("prejudicado")
 
-    # Aplicar filtros
     if valor:
         df = df[df[coluna].astype(str).str.contains(valor, case=False, na=False)]
 

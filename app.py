@@ -177,11 +177,13 @@ else:
     # FILTRO SITUAÇÃO DA DEMANDA (checkboxes responsivos)
     # ======================
     st.subheader("📌 Situação da Demanda")
-    st.markdown('<div class="filtros-demanda" style="display:flex; gap:20px;">', unsafe_allow_html=True)
-    chk_solucionado = st.checkbox("Solucionado")
-    chk_andamento = st.checkbox("Em Andamento")
-    chk_prejudicado = st.checkbox("Prejudicado")
-    st.markdown("</div>", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        chk_solucionado = st.checkbox("Solucionado")
+    with col2:
+        chk_andamento = st.checkbox("Em Andamento")
+    with col3:
+        chk_prejudicado = st.checkbox("Prejudicado")
 
     filtros = []
     if chk_solucionado:

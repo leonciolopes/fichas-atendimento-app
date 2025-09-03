@@ -8,7 +8,7 @@ import streamlit_authenticator as stauth
 st.set_page_config(page_title="Fichas de Atendimento", layout="wide")
 
 # ======================
-# LOGIN
+# LOGIN (usa os Secrets do Streamlit Cloud)
 # ======================
 credentials = {
     "usernames": {
@@ -63,28 +63,12 @@ else:
 
     h2, h3, h4 { color:#fff !important; font-weight:800 !important; }
 
-    /* Estilo quadradinho para radio e checkboxes */
-    div.stRadio > div {flex-direction: row;}
-    div.stRadio label > div:first-of-type {
-        border-radius: 4px;
-        border: 2px solid #004D26;
-        width: 18px; height: 18px;
-        margin-right: 6px;
-    }
-    div.stCheckbox label > div:first-of-type {
-        border-radius: 4px;
-        border: 2px solid #004D26;
-        width: 18px; height: 18px;
-        margin-right: 6px;
-    }
-
     /* MOBILE */
     @media (max-width: 768px) {
         .header-row { flex-direction: column; text-align: center; }
         .app-title { font-size: 22px !important; margin-top: 10px; }
         .header-row img { width: 150px !important; margin-bottom: 5px; }
         h2, h3, h4 { font-size: 16px !important; }
-        div.stRadio > div {flex-direction: column;}
     }
     </style>
     """, unsafe_allow_html=True)
@@ -104,23 +88,23 @@ else:
     )
 
     # ======================
-    # FILTRO DE CATEGORIA (radio → quadradinho estilizado)
+    # FILTRO DE CATEGORIAS (radio → círculos)
     # ======================
     st.subheader("📑 Selecione a categoria:")
     aba_selecionada = st.radio(
-        label="",
+        label="",  
         options=["Atendimento", "Demandas Oftalmológicas"],
-        index=0
+        horizontal=True
     )
 
     # Definir GID conforme aba selecionada
     if aba_selecionada == "Atendimento":
-        gid = "0"   # substitua pelo gid real da aba Atendimento
+        gid = "0"
     else:
-        gid = "1946301846"   # substitua pelo gid real da aba Demandas Oftalmológicas
+        gid = "1946301846"
 
     # ======================
-    # CARREGAR PLANILHA
+    # CARREGAR PLANILHA COM BASE NA ABA
     # ======================
     url = f"https://docs.google.com/spreadsheets/d/1TU9o9bgZPfZ-aKrxfgUqG03jTZOM3mWl0CCLn5SfwO0/export?format=csv&gid={gid}"
     df = pd.read_csv(url)
@@ -143,6 +127,7 @@ else:
         "Descrição da Situação": "Descrição da Situação",
         "Data da Atualização": "Data da Atualização"
     }
+
     existentes = [c for c in mapeamento if c in df.columns]
     df = df[existentes].rename(columns=mapeamento)
 
@@ -186,7 +171,7 @@ else:
     valor = st.text_input(f"Digite um valor para filtrar em **{coluna}**:")
 
     # ======================
-    # FILTRO SITUAÇÃO DA DEMANDA (checkboxes quadradinhos)
+    # FILTRO SITUAÇÃO DA DEMANDA (checkboxes)
     # ======================
     st.subheader("📌 Situação da Demanda")
     chk_solucionado = st.checkbox("Solucionado")

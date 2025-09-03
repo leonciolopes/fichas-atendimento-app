@@ -109,7 +109,6 @@ else:
         label_visibility="collapsed"
     )
 
-    # Definir GID conforme aba selecionada
     if aba_selecionada == "Demandas Gerais":
         gid = "0"
     else:
@@ -190,7 +189,6 @@ else:
     chk_solucionado = st.checkbox("Solucionado")
     chk_andamento = st.checkbox("Em Andamento")
     chk_prejudicado = st.checkbox("Prejudicado")
-    st.markdown('</div>', unsafe_allow_html=True)
 
     filtros = []
     if chk_solucionado:

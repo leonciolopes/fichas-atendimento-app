@@ -88,18 +88,20 @@ else:
     )
 
     # ======================
-    # FILTRO DE ABA (radio = miniquadradinho único)
+    # FILTRO DE ABA (radio)
     # ======================
     st.subheader("📑 Selecione a categoria:")
     aba_selecionada = st.radio(
-        ["Atendimento", "Demandas Oftalmológicas"]
+        label="",  # remove texto extra
+        options=["Atendimento", "Demandas Oftalmológicas"],
+        index=0
     )
 
     # Definir GID conforme aba selecionada
     if aba_selecionada == "Atendimento":
-        gid = "0"   # substitua pelo gid real
+        gid = "0"   # substitua pelo gid real da aba Atendimento
     else:
-        gid = "1"  # substitua pelo gid real da aba "Demandas Oftalmológicas"
+        gid = "1"   # substitua pelo gid real da aba Demandas Oftalmológicas
 
     # ======================
     # CARREGAR PLANILHA COM BASE NA ABA

@@ -30,7 +30,7 @@ authenticator = stauth.Authenticate(
     cookie_expiry_days=st.secrets["cookie"]["expiry_days"]
 )
 
-# Tela de login na sidebar
+# Tela de login
 name, auth_status, username = authenticator.login(location="sidebar")
 
 # ======================
@@ -44,7 +44,7 @@ elif auth_status is None:
 
 else:
     # ======================
-    # CSS EXTRA (responsividade)
+    # CSS EXTRA
     # ======================
     st.markdown("""
     <style>
@@ -58,32 +58,17 @@ else:
         background-color:#004D26; padding:8px; border-radius:8px;
     }
     .app-title {
-        flex:1; text-align:center; color:#fff; font-weight:800; font-size:38px;
+        flex:1; text-align:center; color:#fff; font-weight:800; font-size:36px;
     }
 
     h2, h3, h4 { color:#fff !important; font-weight:800 !important; }
 
-    table {
-        border-collapse: collapse;
-        margin: auto;
-    }
-    th, td {
-        text-align: center !important;
-        padding: 8px;
-        border: 1px solid #1f1f1f;
-    }
-    th {
-        background-color: #e6e6e6;
-        color: black;
-        font-weight: bold;
-    }
-
     /* MOBILE */
     @media (max-width: 768px) {
         .header-row { flex-direction: column; text-align: center; }
-        .app-title { font-size: 24px !important; margin-top: 10px; }
-        .header-row img { width: 160px !important; margin-bottom: 5px; }
-        h2, h3, h4 { font-size: 18px !important; }
+        .app-title { font-size: 22px !important; margin-top: 10px; }
+        .header-row img { width: 150px !important; margin-bottom: 5px; }
+        h2, h3, h4 { font-size: 16px !important; }
     }
     </style>
     """, unsafe_allow_html=True)
@@ -96,16 +81,29 @@ else:
         <div class="header-row">
             <div></div>
             <div class="app-title">Fichas de Atendimento - Gabinete Vereador Leôncio Lopes</div>
-            <img src="https://raw.githubusercontent.com/leonciolopes2528/fichas-atendimento-app/main/Logo-Branca.png" width="250">
+            <img src="https://raw.githubusercontent.com/leonciolopes2528/fichas-atendimento-app/main/Logo-Branca.png" width="220">
         </div>
         """,
         unsafe_allow_html=True
     )
 
     # ======================
-    # CARREGAR PLANILHA
+    # SELEÇÃO DA ABA
     # ======================
-    url = "https://docs.google.com/spreadsheets/d/1TU9o9bgZPfZ-aKrxfgUqG03jTZOM3mWl0CCLn5SfwO0/export?format=csv&gid=0"
+    abas = {
+        "Atendimentos Gerais": "0",      # gid=0
+        "Educação": "123456789",         # exemplo gid
+        "Saúde": "987654321",            # exemplo gid
+        "Infraestrutura": "555666777",   # exemplo gid
+    }
+
+    aba_selecionada = st.selectbox("📑 Selecione a aba da planilha:", list(abas.keys()))
+
+    # ======================
+    # CARREGAR PLANILHA COM BASE NA ABA
+    # ======================
+    gid = abas[aba_selecionada]
+    url = f"https://docs.google.com/spreadsheets/d/1TU9o9bgZPfZ-aKrxfgUqG03jTZOM3mWl0CCLn5SfwO0/export?format=csv&gid={gid}"
     df = pd.read_csv(url)
     df.columns = df.columns.str.replace(r"\s+", " ", regex=True).str.strip()
 
@@ -160,29 +158,34 @@ else:
         return sty
 
     # ======================
-    # FILTROS (antes da tabela)
+    # FILTRO GERAL (texto)
     # ======================
     st.subheader("🔎 Filtro de Dados")
     coluna = st.selectbox("Selecione uma coluna para filtrar:", df.columns, index=0)
     valor = st.text_input(f"Digite um valor para filtrar em **{coluna}**:")
 
-    # Aplicar filtro diretamente na tabela principal
+    # ======================
+    # FILTRO SITUAÇÃO DA DEMANDA
+    # ======================
+    st.subheader("📌 Situação da Demanda")
+    opcoes_situacao = ["Solucionado", "Em Andamento", "Prejudicado"]
+    selecionados = st.multiselect("Selecione uma ou mais situações:", opcoes_situacao)
+
+    # Aplicar filtros
     if valor:
         df = df[df[coluna].astype(str).str.contains(valor, case=False, na=False)]
 
-    # ======================
-    # EXIBIR TABELA (já filtrada)
-    # ======================
-    st.subheader("📌 Fichas de Atendimento")
+    if selecionados and "Situação da Demanda" in df.columns:
+        df = df[df["Situação da Demanda"].str.lower().isin([s.lower() for s in selecionados])]
 
-    # Ajustar altura da tabela (mobile vs desktop)
-    is_mobile = st.session_state.get("is_mobile", False)
-    table_height = 600 if not is_mobile else 300
-
+    # ======================
+    # EXIBIR TABELA
+    # ======================
+    st.subheader(f"📌 Fichas de Atendimento - {aba_selecionada}")
     st.dataframe(
         make_styler(df),
         use_container_width=True,
-        height=table_height
+        height=500
     )
 
     # ======================

@@ -104,14 +104,16 @@ else:
     st.subheader("📑 Selecione a categoria:")
     aba_selecionada = st.radio(
         label="",
-        options=["Demandas Gerais", "Demandas Oftalmológicas"],
+        options=["Demandas Gerais", "Demandas Oftalmológicas", "Demandas da Saúde"],
         horizontal=True,
         label_visibility="collapsed"
     )
 
     if aba_selecionada == "Demandas Gerais":
         gid = "0"
-    else:
+    elif aba_selecionada == "Demandas Oftalmológicas":
+        gid = "27665281"
+    else
         gid = "1946301846"
 
     # ======================

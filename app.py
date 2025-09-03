@@ -112,9 +112,9 @@ else:
     if aba_selecionada == "Demandas Gerais":
         gid = "0"
     elif aba_selecionada == "Demandas Oftalmológicas":
-        gid = "27665281"
-    else:
         gid = "1946301846"
+    else:
+        gid = "27665281"
 
     # ======================
     # CARREGAR PLANILHA

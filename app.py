@@ -117,7 +117,7 @@ else:
     if aba_selecionada == "Atendimento":
         gid = "0"   # substitua pelo gid real da aba Atendimento
     else:
-        gid = "1"   # substitua pelo gid real da aba Demandas Oftalmológicas
+        gid = "1946301846"   # substitua pelo gid real da aba Demandas Oftalmológicas
 
     # ======================
     # CARREGAR PLANILHA

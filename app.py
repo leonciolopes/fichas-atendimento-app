@@ -60,7 +60,6 @@ else:
     .app-title {
         flex:1; text-align:center; color:#fff; font-weight:800; font-size:36px;
     }
-
     h2, h3, h4 { color:#fff !important; font-weight:800 !important; }
 
     /* MOBILE */
@@ -69,7 +68,11 @@ else:
         .app-title { font-size: 22px !important; margin-top: 10px; }
         .header-row img { width: 150px !important; margin-bottom: 5px; }
         h2, h3, h4 { font-size: 16px !important; }
+        .filtros-demanda {flex-direction: column !important; align-items: flex-start !important;}
     }
+
+    /* Ajuste do espaço entre título e opções */
+    .stRadio > label {margin-bottom: -5px !important;}
     </style>
     """, unsafe_allow_html=True)
 
@@ -88,12 +91,12 @@ else:
     )
 
     # ======================
-    # FILTRO DE CATEGORIAS (radio → círculos)
+    # FILTRO DE CATEGORIA (radio em linha)
     # ======================
     st.subheader("📑 Selecione a categoria:")
     aba_selecionada = st.radio(
-        label="",  
-        options=["Atendimento", "Demandas Oftalmológicas"],
+        "",
+        ["Atendimento", "Demandas Oftalmológicas"],
         horizontal=True
     )
 
@@ -171,12 +174,14 @@ else:
     valor = st.text_input(f"Digite um valor para filtrar em **{coluna}**:")
 
     # ======================
-    # FILTRO SITUAÇÃO DA DEMANDA (checkboxes)
+    # FILTRO SITUAÇÃO DA DEMANDA (checkboxes responsivos)
     # ======================
     st.subheader("📌 Situação da Demanda")
+    st.markdown('<div class="filtros-demanda" style="display:flex; gap:20px;">', unsafe_allow_html=True)
     chk_solucionado = st.checkbox("Solucionado")
     chk_andamento = st.checkbox("Em Andamento")
     chk_prejudicado = st.checkbox("Prejudicado")
+    st.markdown("</div>", unsafe_allow_html=True)
 
     filtros = []
     if chk_solucionado:

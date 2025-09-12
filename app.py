@@ -104,7 +104,7 @@ else:
     st.subheader("📑 Selecione a categoria:")
     aba_selecionada = st.radio(
         label="",
-        options=["Demandas Gerais", "Demandas Oftalmológicas", "Demandas da Saúde"],
+        options=["Demandas Gerais", "Demandas Oftalmológicas", "Demandas da Saúde", "Demandas Jurídicas"],
         horizontal=True,
         label_visibility="collapsed"
     )
@@ -113,8 +113,10 @@ else:
         gid = "0"
     elif aba_selecionada == "Demandas Oftalmológicas":
         gid = "1946301846"
-    else:
+    elif aba_selecionada == "Demandas da Saúde":
         gid = "27665281"
+    else:
+        gid = "1416239426"
 
     # ======================
     # CARREGAR PLANILHA

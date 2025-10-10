@@ -1,10 +1,7 @@
-import io
-import time
-import requests
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 import streamlit_authenticator as stauth
+import plotly.express as px
 
 # ======================
 # CONFIGURAÇÃO DA PÁGINA
@@ -108,39 +105,13 @@ else:
     BASE_URL = "https://docs.google.com/spreadsheets/d/1TU9o9bgZPfZ-aKrxfgUqG03jTZOM3mWl0CCLn5SfwO0/export?format=csv&gid={gid}"
 
     # ======================
-    # BOTÃO DE ATUALIZAÇÃO MANUAL
-    # ======================
-    c1, c2 = st.columns([1, 6])
-    with c1:
-        if st.button("🔄 Atualizar dados", use_container_width=True):
-            st.cache_data.clear()
-            st.experimental_rerun()
-
-    # ======================
     # FUNÇÕES AUXILIARES
     # ======================
-    @st.cache_data(ttl=60, show_spinner=False)  # expira automaticamente a cada 60s
+    @st.cache_data(show_spinner=False)
     def carregar_df(gid: str) -> pd.DataFrame:
-        """
-        Baixa a aba indicada (gid) do Google Sheets forçando não-cache no request
-        e usando um parâmetro de cache-busting por minuto.
-        """
-        # cache-busting por minuto para evitar cache do Google/CDN
-        bust = int(time.time() // 60)
-        url = BASE_URL.format(gid=gid) + f"&cachebust={bust}"
-
-        resp = requests.get(
-            url,
-            headers={
-                "Cache-Control": "no-cache, no-store, must-revalidate",
-                "Pragma": "no-cache",
-                "Expires": "0",
-            },
-            timeout=30,
-        )
-        resp.raise_for_status()
-        df = pd.read_csv(io.StringIO(resp.text))
-        df.columns = df.columns.str.replace(r"\s+", " ", regex=True).str.strip()
+        url = BASE_URL.format(gid=gid)
+        df = pd.read_csv(url)
+        df.columns = df.columns.str.replace(r"\\s+", " ", regex=True).str.strip()
         return df
 
     def preparar_df_bruto(df_raw: pd.DataFrame) -> pd.DataFrame:
@@ -194,6 +165,7 @@ else:
             sty = sty.hide_index()
         return sty
 
+    # ---- Gráfico de pizza (com cores personalizadas)
     def pie_status(df: pd.DataFrame, key: str):
         col = "Situação da Demanda"
         if col not in df.columns or df.empty:
@@ -216,6 +188,7 @@ else:
         contagem = (s.value_counts().reindex(ordem, fill_value=0).reset_index())
         contagem.columns = ["Situação", "Quantidade"]
 
+        # Paleta personalizada
         cores = {
             "Solucionado": "#33cc33",   # Verde
             "Em Andamento": "#ffd633",  # Amarelo
@@ -255,7 +228,7 @@ else:
     # ======================
     # CARREGAR + PREPARAR DF
     # ======================
-    df_raw = carregar_df(gid)     # <- agora atualiza com ttl e cachebust
+    df_raw = carregar_df(gid)
     df = preparar_df_bruto(df_raw)
 
     # ======================

@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import plotly.express as px
 import streamlit_authenticator as stauth
 
 # ======================
@@ -22,7 +23,6 @@ credentials = {
         },
     }
 }
-
 authenticator = stauth.Authenticate(
     credentials,
     st.secrets["cookie"]["name"],
@@ -62,23 +62,16 @@ else:
     }
     h2, h3, h4 { color:#fff !important; font-weight:800 !important; }
 
-    /* Ajusta radios mais próximos do título */
-    div[data-baseweb="radio"] {
-        margin-top: -10px !important;
-        margin-bottom: -10px !important;
-    }
+    /* Aproxima o radio do título */
+    div[data-baseweb="radio"] { margin-top: -10px !important; margin-bottom: -10px !important; }
 
     /* Situação da Demanda responsiva */
-    .filtros-demanda {
-        display: flex;
-        gap: 20px;
-    }
+    .filtros-demanda { display: flex; gap: 20px; }
     @media (max-width: 768px) {
         .header-row { flex-direction: column; text-align: center; }
         .app-title { font-size: 22px !important; margin-top: 10px; }
         .header-row img { width: 150px !important; margin-bottom: 5px; }
         h2, h3, h4 { font-size: 16px !important; }
-
         .filtros-demanda {flex-direction: column; gap: 5px;}
     }
     </style>
@@ -98,37 +91,17 @@ else:
         unsafe_allow_html=True
     )
 
-    # ======================
-    # FILTRO DE CATEGORIA
-    # ======================
-    st.subheader("📑 Selecione a categoria:")
-    aba_selecionada = st.radio(
-        label="",
-        options=["Demandas Gerais", "Demandas Oftalmológicas", "Demandas da Saúde", "Demandas Jurídicas"],
-        horizontal=True,
-        label_visibility="collapsed"
-    )
+    # ----------------------
+    # utilitários
+    # ----------------------
+    GIDS = {
+        "Demandas Gerais": "0",
+        "Demandas Oftalmológicas": "1946301846",
+        "Demandas da Saúde": "27665281",
+        "Demandas Jurídicas": "1416239426",
+    }
 
-    if aba_selecionada == "Demandas Gerais":
-        gid = "0"
-    elif aba_selecionada == "Demandas Oftalmológicas":
-        gid = "1946301846"
-    elif aba_selecionada == "Demandas da Saúde":
-        gid = "27665281"
-    else:
-        gid = "1416239426"
-
-    # ======================
-    # CARREGAR PLANILHA
-    # ======================
-    url = f"https://docs.google.com/spreadsheets/d/1TU9o9bgZPfZ-aKrxfgUqG03jTZOM3mWl0CCLn5SfwO0/export?format=csv&gid={gid}"
-    df = pd.read_csv(url)
-    df.columns = df.columns.str.replace(r"\s+", " ", regex=True).str.strip()
-
-    # ======================
-    # FILTRAR/RENOMEAR COLUNAS
-    # ======================
-    mapeamento = {
+    COL_MAP = {
         "Data de Atendimento": "Data de Atendimento",
         "Nome Completo": "Nome",
         "Telefone (31)9xxxx-xxxx": "Telefone",
@@ -140,38 +113,124 @@ else:
         "Servidor Responsável": "Servidor Responsável",
         "Situação da Demanda": "Situação da Demanda",
         "Descrição da Situação": "Descrição da Situação",
-        "Data da Atualização": "Data da Atualização"
+        "Data da Atualização": "Data da Atualização",
     }
 
-    existentes = [c for c in mapeamento if c in df.columns]
-    df = df[existentes].rename(columns=mapeamento)
-
-    if "Nome" in df.columns:
-        df = df[df["Nome"].notna() & (df["Nome"].str.strip() != "")]
-
-    colunas_visiveis = [
+    SHOW_COLS = [
         "Nome", "Telefone", "Rua", "Número", "Bairro",
         "Área da Demanda", "Resumo da Demanda", "Servidor Responsável",
         "Situação da Demanda", "Descrição da Situação", "Data da Atualização"
     ]
-    df = df[[c for c in colunas_visiveis if c in df.columns]]
+
+    def load_sheet(gid: str) -> pd.DataFrame:
+        url = f"https://docs.google.com/spreadsheets/d/1TU9o9bgZPfZ-aKrxfgUqG03jTZOM3mWl0CCLn5SfwO0/export?format=csv&gid={gid}"
+        df_ = pd.read_csv(url)
+        df_.columns = df_.columns.str.replace(r"\s+", " ", regex=True).str.strip()
+        ok_cols = [c for c in COL_MAP if c in df_.columns]
+        df_ = df_[ok_cols].rename(columns=COL_MAP)
+        if "Nome" in df_.columns:
+            # garante string para .str
+            df_["Nome"] = df_["Nome"].astype(str)
+            df_ = df_[df_["Nome"].notna() & (df_["Nome"].str.strip() != "")]
+        df_ = df_[[c for c in SHOW_COLS if c in df_.columns]]
+        return df_
+
+    def normalize_status(s: pd.Series) -> pd.Series:
+        s = s.fillna("").astype(str).str.lower()
+        # Mapeamento por “contenção” para pegar variações
+        out = []
+        for v in s:
+            if "solucion" in v:
+                out.append("Solucionado")
+            elif "andament" in v:
+                out.append("Em Andamento")
+            elif "prejudic" in v:
+                out.append("Prejudicado")
+            else:
+                out.append("Não informado")
+        return pd.Series(out, index=s.index)
+
+    def status_counts(df_: pd.DataFrame) -> pd.DataFrame:
+        if "Situação da Demanda" not in df_.columns:
+            return pd.DataFrame({"Situação": [], "Quantidade": []})
+        st_norm = normalize_status(df_["Situação da Demanda"])
+        cnt = st_norm.value_counts().reindex(
+            ["Solucionado", "Em Andamento", "Prejudicado", "Não informado"],
+            fill_value=0
+        )
+        return pd.DataFrame({"Situação": cnt.index, "Quantidade": cnt.values})
+
+    COLOR_MAP = {
+        "Solucionado": "#33cc33",     # verde
+        "Em Andamento": "#ffd633",    # amarelo
+        "Prejudicado": "#ff4d4d",     # vermelho
+        "Não informado": "#9e9e9e",   # cinza
+    }
+
+    def pie_status(df_: pd.DataFrame, titulo: str):
+        data = status_counts(df_)
+        if data["Quantidade"].sum() == 0:
+            st.info("Sem dados de situação nesta categoria.")
+            return
+        fig = px.pie(
+            data,
+            values="Quantidade",
+            names="Situação",
+            title=titulo,
+            hole=0.35,
+            color="Situação",
+            color_discrete_map=COLOR_MAP
+        )
+        fig.update_traces(textposition='inside', textinfo='percent+label')
+        fig.update_layout(margin=dict(l=0, r=0, t=40, b=0))
+        st.plotly_chart(fig, use_container_width=True)
 
     # ======================
-    # FUNÇÕES DE ESTILO
+    # FILTRO DE CATEGORIA
     # ======================
-    def highlight_situacao(val):
+    st.subheader("📑 Selecione a categoria:")
+    aba_selecionada = st.radio(
+        label="",
+        options=list(GIDS.keys()),
+        horizontal=True,
+        label_visibility="collapsed"
+    )
+    df = load_sheet(GIDS[aba_selecionada])
+
+    # ======================
+    # GRÁFICO – CATEGORIA ATUAL
+    # ======================
+    st.subheader("📊 Status das demandas (categoria selecionada)")
+    pie_status(df, f"{aba_selecionada}")
+
+    # (Opcional) visão geral com todas as categorias
+    with st.expander("📈 Ver comparação entre todas as categorias"):
+        cols = st.columns(2)
+        all_items = list(GIDS.items())
+        for i, (nome, gid) in enumerate(all_items):
+            with cols[i % 2]:
+                df_tmp = load_sheet(gid)
+                pie_status(df_tmp, nome)
+
+    # ======================
+    # FUNÇÕES DE ESTILO DA TABELA
+    # ======================
+    def highlight_situacao_cell(val):
         if isinstance(val, str):
-            v = val.lower()
-            if "prejudicado" in v:   return "background-color:#ff4d4d;color:white;font-weight:bold; text-align:center;"
-            if "em andamento" in v:  return "background-color:#ffd633;color:black;font-weight:bold; text-align:center;"
-            if "solucionado" in v:   return "background-color:#33cc33;color:white;font-weight:bold; text-align:center;"
+            l = val.lower()
+            if "prejudic" in l:
+                return "background-color:#ff4d4d;color:white;font-weight:bold; text-align:center;"
+            if "andament" in l:
+                return "background-color:#ffd633;color:black;font-weight:bold; text-align:center;"
+            if "solucion" in l:
+                return "background-color:#33cc33;color:white;font-weight:bold; text-align:center;"
         return "text-align:center;"
 
     def make_styler(df_in: pd.DataFrame):
         sty = df_in.style.set_properties(**{"text-align": "center"}) \
                          .set_table_styles([{"selector": "th", "props": [("text-align", "center")]}])
         if "Situação da Demanda" in df_in.columns:
-            sty = sty.applymap(highlight_situacao, subset=["Situação da Demanda"])
+            sty = sty.applymap(highlight_situacao_cell, subset=["Situação da Demanda"])
         try:
             sty = sty.hide(axis="index")
         except Exception:
@@ -202,18 +261,19 @@ else:
     if chk_prejudicado:
         filtros.append("prejudicado")
 
+    # Aplicação dos filtros
+    df_filtrado = df.copy()
     if valor:
-        df = df[df[coluna].astype(str).str.contains(valor, case=False, na=False)]
-
-    if filtros and "Situação da Demanda" in df.columns:
-        df = df[df["Situação da Demanda"].str.lower().isin(filtros)]
+        df_filtrado = df_filtrado[df_filtrado[coluna].astype(str).str.contains(valor, case=False, na=False)]
+    if filtros and "Situação da Demanda" in df_filtrado.columns:
+        df_filtrado = df_filtrado[df_filtrado["Situação da Demanda"].str.lower().str.contains("|".join(filtros))]
 
     # ======================
     # EXIBIR TABELA
     # ======================
     st.subheader(f"📌 Fichas de Atendimento - {aba_selecionada}")
     st.dataframe(
-        make_styler(df),
+        make_styler(df_filtrado),
         use_container_width=True,
         height=500
     )
@@ -244,4 +304,5 @@ else:
         unsafe_allow_html=True
     )
 
+    # Botão de logout
     authenticator.logout("Sair", "sidebar")

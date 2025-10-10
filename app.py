@@ -63,13 +63,11 @@ else:
     }
     h2, h3, h4 { color:#fff !important; font-weight:800 !important; }
 
-    /* Radios mais próximos do título */
     div[data-baseweb="radio"] {
         margin-top: -10px !important;
         margin-bottom: -10px !important;
     }
 
-    /* Checkboxes em linha (desktop) e coluna (mobile) */
     .filtros-demanda { display: flex; gap: 20px; }
     @media (max-width: 768px) {
         .header-row { flex-direction: column; text-align: center; }
@@ -96,7 +94,7 @@ else:
     )
 
     # ======================
-    # MAPA DE CATEGORIAS (aba -> gid)
+    # MAPA DE CATEGORIAS
     # ======================
     CATEGORIAS = {
         "Demandas Gerais": "0",
@@ -107,13 +105,13 @@ else:
     BASE_URL = "https://docs.google.com/spreadsheets/d/1TU9o9bgZPfZ-aKrxfgUqG03jTZOM3mWl0CCLn5SfwO0/export?format=csv&gid={gid}"
 
     # ======================
-    # HELPERS
+    # FUNÇÕES AUXILIARES
     # ======================
     @st.cache_data(show_spinner=False)
     def carregar_df(gid: str) -> pd.DataFrame:
         url = BASE_URL.format(gid=gid)
         df = pd.read_csv(url)
-        df.columns = df.columns.str.replace(r"\s+", " ", regex=True).str.strip()
+        df.columns = df.columns.str.replace(r"\\s+", " ", regex=True).str.strip()
         return df
 
     def preparar_df_bruto(df_raw: pd.DataFrame) -> pd.DataFrame:
@@ -167,7 +165,7 @@ else:
             sty = sty.hide_index()
         return sty
 
-    # ---- Gráfico de pizza (menor, centralizado e sem título)
+    # ---- Gráfico de pizza (com cores personalizadas)
     def pie_status(df: pd.DataFrame, key: str):
         col = "Situação da Demanda"
         if col not in df.columns or df.empty:
@@ -190,18 +188,28 @@ else:
         contagem = (s.value_counts().reindex(ordem, fill_value=0).reset_index())
         contagem.columns = ["Situação", "Quantidade"]
 
+        # Paleta personalizada
+        cores = {
+            "Solucionado": "#33cc33",   # Verde
+            "Em Andamento": "#ffd633",  # Amarelo
+            "Prejudicado": "#ff4d4d",   # Vermelho
+            "Outros": "#a6a6a6"         # Cinza
+        }
+
         fig = px.pie(
             contagem,
             names="Situação",
             values="Quantidade",
-            title=None,        # <-- sem título
-            hole=0.35
+            title=None,
+            hole=0.35,
+            color="Situação",
+            color_discrete_map=cores
         )
         fig.update_traces(textposition="inside", textinfo="percent+label")
-        # menor e mais compacto
         fig.update_layout(
             margin=dict(l=0, r=0, t=0, b=0),
-            width=420, height=420
+            width=420, height=420,
+            showlegend=True
         )
         st.plotly_chart(fig, use_container_width=False, key=key)
 
@@ -238,7 +246,6 @@ else:
             coluna = st.selectbox("Selecione uma coluna para filtrar:", df.columns, index=0)
             valor = st.text_input(f"Digite um valor para filtrar em **{coluna}**:")
 
-            # Título com mesmo tamanho de "Análise e Filtros"
             st.subheader("📊 Situação da Demanda")
 
             st.markdown('<div class="filtros-demanda">', unsafe_allow_html=True)
@@ -254,17 +261,13 @@ else:
             if chk_prejudicado:
                 filtros.append("prejudicado")
 
-            # aplica filtros
             df_filtrado = df.copy()
             if valor:
                 df_filtrado = df_filtrado[df_filtrado[coluna].astype(str).str.contains(valor, case=False, na=False)]
             if filtros and "Situação da Demanda" in df_filtrado.columns:
-                df_filtrado = df_filtrado[
-                    df_filtrado["Situação da Demanda"].astype(str).str.lower().isin(filtros)
-                ]
+                df_filtrado = df_filtrado[df_filtrado["Situação da Demanda"].astype(str).str.lower().isin(filtros)]
 
     with col_grafico:
-        # centraliza o gráfico à direita (coluna do meio de 3)
         g1, g2, g3 = st.columns([1, 2, 1])
         with g2:
             pie_status(df_filtrado, key=f"pie_lado_{gid}")
@@ -315,5 +318,4 @@ else:
         unsafe_allow_html=True
     )
 
-    # Botão de logout
     authenticator.logout("Sair", "sidebar")

@@ -283,16 +283,6 @@ else:
     )
 
     # ======================
-    # COMPARATIVO ENTRE TODAS AS CATEGORIAS
-    # ======================
-    with st.expander("📊 Ver comparação entre todas as categorias", expanded=False):
-        cols = st.columns(4)
-        for i, (nome_cat, gid_cat) in enumerate(CATEGORIAS.items()):
-            dfr = preparar_df_bruto(carregar_df(gid_cat))
-            with cols[i % 4]:
-                pie_status(dfr, key=f"pie_comp_{gid_cat}")
-
-    # ======================
     # FOOTER
     # ======================
     st.markdown(

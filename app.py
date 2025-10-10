@@ -63,23 +63,20 @@ else:
     }
     h2, h3, h4 { color:#fff !important; font-weight:800 !important; }
 
-    /* Ajusta radios mais próximos do título */
+    /* Radios mais próximos do título */
     div[data-baseweb="radio"] {
         margin-top: -10px !important;
         margin-bottom: -10px !important;
     }
 
-    /* Situação da Demanda responsiva */
-    .filtros-demanda {
-        display: flex;
-        gap: 20px;
-    }
+    /* Checkboxes em linha (desktop) e coluna (mobile) */
+    .filtros-demanda { display: flex; gap: 20px; }
     @media (max-width: 768px) {
         .header-row { flex-direction: column; text-align: center; }
         .app-title { font-size: 22px !important; margin-top: 10px; }
         .header-row img { width: 150px !important; margin-bottom: 5px; }
         h2, h3, h4 { font-size: 16px !important; }
-        .filtros-demanda {flex-direction: column; gap: 5px;}
+        .filtros-demanda { flex-direction: column; gap: 6px; }
     }
     </style>
     """, unsafe_allow_html=True)
@@ -107,7 +104,6 @@ else:
         "Demandas da Saúde": "27665281",
         "Demandas Jurídicas": "1416239426",
     }
-
     BASE_URL = "https://docs.google.com/spreadsheets/d/1TU9o9bgZPfZ-aKrxfgUqG03jTZOM3mWl0CCLn5SfwO0/export?format=csv&gid={gid}"
 
     # ======================
@@ -117,11 +113,10 @@ else:
     def carregar_df(gid: str) -> pd.DataFrame:
         url = BASE_URL.format(gid=gid)
         df = pd.read_csv(url)
-        df.columns = df.columns.str.replace(r"\s+", " ", regex=True).str.strip()
+        df.columns = df.columns.str.replace(r"\\s+", " ", regex=True).str.strip()
         return df
 
     def preparar_df_bruto(df_raw: pd.DataFrame) -> pd.DataFrame:
-        # mapeamento -> nomes consistentes
         mapeamento = {
             "Data de Atendimento": "Data de Atendimento",
             "Nome Completo": "Nome",
@@ -139,22 +134,18 @@ else:
         existentes = [c for c in mapeamento if c in df_raw.columns]
         df = df_raw[existentes].rename(columns=mapeamento)
 
-        # remove linhas com Nome em branco
         if "Nome" in df.columns:
             df = df[df["Nome"].notna()]
-            # algumas abas podem ter valores não-string; convertemos de forma segura:
             df["Nome"] = df["Nome"].astype(str)
             df = df[df["Nome"].str.strip() != ""]
 
-        # define ordem de colunas visíveis
         colunas_visiveis = [
             "Nome", "Telefone", "Rua", "Número", "Bairro",
             "Área da Demanda", "Resumo da Demanda", "Servidor Responsável",
             "Situação da Demanda", "Descrição da Situação", "Data da Atualização"
         ]
         colunas = [c for c in colunas_visiveis if c in df.columns]
-        df = df[colunas].copy()
-        return df
+        return df[colunas].copy()
 
     def highlight_situacao(val):
         if isinstance(val, str):
@@ -177,13 +168,9 @@ else:
         return sty
 
     def pie_status(df: pd.DataFrame, key: str, titulo: str = ""):
-        """
-        Desenha um gráfico de pizza com a distribuição de Situação da Demanda.
-        Usa 'key' para evitar StreamlitDuplicateElementId.
-        """
         col = "Situação da Demanda"
-        if col not in df.columns:
-            st.info("Coluna 'Situação da Demanda' não encontrada nesta aba.")
+        if col not in df.columns or df.empty:
+            st.info("Sem dados para o gráfico nesta seleção.")
             return
 
         s = (df[col].fillna("")
@@ -226,54 +213,61 @@ else:
     gid = CATEGORIAS[aba_selecionada]
 
     # ======================
-    # CARREGAR + PREPARAR DF DA ABA ATUAL
+    # CARREGAR + PREPARAR DF
     # ======================
     df_raw = carregar_df(gid)
     df = preparar_df_bruto(df_raw)
 
     # ======================
-    # GRÁFICO PIZZA (ABA ATUAL)
+    # FILTROS + GRÁFICO LADO A LADO
     # ======================
-    st.subheader("🍩 Distribuição por Situação")
-    pie_status(df, key=f"pie_atual_{gid}", titulo=f"{aba_selecionada}")
+    st.subheader("🔎 Análise e Filtros")
+
+    col_filtros, col_grafico = st.columns([1, 1])
+
+    with col_filtros:
+        if len(df.columns) == 0:
+            st.info("Não há colunas disponíveis nesta aba.")
+            df_filtrado = df.copy()
+        else:
+            coluna = st.selectbox("Selecione uma coluna para filtrar:", df.columns, index=0)
+            valor = st.text_input(f"Digite um valor para filtrar em **{coluna}**:")
+
+            st.caption("Situação da Demanda")
+            st.markdown('<div class="filtros-demanda">', unsafe_allow_html=True)
+            chk_solucionado = st.checkbox("Solucionado")
+            chk_andamento = st.checkbox("Em Andamento")
+            chk_prejudicado = st.checkbox("Prejudicado")
+
+            filtros = []
+            if chk_solucionado:
+                filtros.append("solucionado")
+            if chk_andamento:
+                filtros.append("em andamento")
+            if chk_prejudicado:
+                filtros.append("prejudicado")
+
+            # aplica filtros
+            df_filtrado = df.copy()
+            if valor:
+                df_filtrado = df_filtrado[df_filtrado[coluna].astype(str).str.contains(valor, case=False, na=False)]
+            if filtros and "Situação da Demanda" in df_filtrado.columns:
+                df_filtrado = df_filtrado[
+                    df_filtrado["Situação da Demanda"].astype(str).str.lower().isin(filtros)
+                ]
+
+    with col_grafico:
+        pie_status(df_filtrado, key=f"pie_lado_{gid}", titulo=f"{aba_selecionada}")
 
     # ======================
-    # FILTROS
+    # TABELA
     # ======================
-    st.subheader("🔎 Filtro de Dados")
-    if len(df.columns) == 0:
-        st.info("Não há colunas disponíveis nesta aba.")
-    else:
-        coluna = st.selectbox("Selecione uma coluna para filtrar:", df.columns, index=0)
-        valor = st.text_input(f"Digite um valor para filtrar em **{coluna}**:")
-
-        st.subheader("ℹ️ Situação da Demanda")
-        st.markdown('<div class="filtros-demanda">', unsafe_allow_html=True)
-        chk_solucionado = st.checkbox("Solucionado")
-        chk_andamento = st.checkbox("Em Andamento")
-        chk_prejudicado = st.checkbox("Prejudicado")
-
-        filtros = []
-        if chk_solucionado:
-            filtros.append("solucionado")
-        if chk_andamento:
-            filtros.append("em andamento")
-        if chk_prejudicado:
-            filtros.append("prejudicado")
-
-        df_filtrado = df.copy()
-        if valor:
-            df_filtrado = df_filtrado[df_filtrado[coluna].astype(str).str.contains(valor, case=False, na=False)]
-        if filtros and "Situação da Demanda" in df_filtrado.columns:
-            df_filtrado = df_filtrado[df_filtrado["Situação da Demanda"].astype(str).str.lower().isin(filtros)]
-
-        # tabela
-        st.subheader(f"📌 Fichas de Atendimento - {aba_selecionada}")
-        st.dataframe(
-            make_styler(df_filtrado),
-            use_container_width=True,
-            height=500
-        )
+    st.subheader(f"📌 Fichas de Atendimento - {aba_selecionada}")
+    st.dataframe(
+        make_styler(df_filtrado),
+        use_container_width=True,
+        height=500
+    )
 
     # ======================
     # COMPARATIVO ENTRE TODAS AS CATEGORIAS

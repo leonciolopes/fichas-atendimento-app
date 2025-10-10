@@ -113,7 +113,7 @@ else:
     def carregar_df(gid: str) -> pd.DataFrame:
         url = BASE_URL.format(gid=gid)
         df = pd.read_csv(url)
-        df.columns = df.columns.str.replace(r"\\s+", " ", regex=True).str.strip()
+        df.columns = df.columns.str.replace(r"\s+", " ", regex=True).str.strip()
         return df
 
     def preparar_df_bruto(df_raw: pd.DataFrame) -> pd.DataFrame:
@@ -167,7 +167,8 @@ else:
             sty = sty.hide_index()
         return sty
 
-    def pie_status(df: pd.DataFrame, key: str, titulo: str = ""):
+    # ---- Gráfico de pizza (menor, centralizado e sem título)
+    def pie_status(df: pd.DataFrame, key: str):
         col = "Situação da Demanda"
         if col not in df.columns or df.empty:
             st.info("Sem dados para o gráfico nesta seleção.")
@@ -193,12 +194,16 @@ else:
             contagem,
             names="Situação",
             values="Quantidade",
-            title=titulo,
+            title=None,        # <-- sem título
             hole=0.35
         )
         fig.update_traces(textposition="inside", textinfo="percent+label")
-        fig.update_layout(margin=dict(l=0, r=0, t=40, b=0))
-        st.plotly_chart(fig, use_container_width=True, key=key)
+        # menor e mais compacto
+        fig.update_layout(
+            margin=dict(l=0, r=0, t=0, b=0),
+            width=420, height=420
+        )
+        st.plotly_chart(fig, use_container_width=False, key=key)
 
     # ======================
     # FILTRO DE CATEGORIA
@@ -233,7 +238,9 @@ else:
             coluna = st.selectbox("Selecione uma coluna para filtrar:", df.columns, index=0)
             valor = st.text_input(f"Digite um valor para filtrar em **{coluna}**:")
 
-            st.caption("Situação da Demanda")
+            # Título com mesmo tamanho de "Análise e Filtros"
+            st.subheader("📊 Situação da Demanda")
+
             st.markdown('<div class="filtros-demanda">', unsafe_allow_html=True)
             chk_solucionado = st.checkbox("Solucionado")
             chk_andamento = st.checkbox("Em Andamento")
@@ -257,7 +264,10 @@ else:
                 ]
 
     with col_grafico:
-        pie_status(df_filtrado, key=f"pie_lado_{gid}", titulo=f"{aba_selecionada}")
+        # centraliza o gráfico à direita (coluna do meio de 3)
+        g1, g2, g3 = st.columns([1, 2, 1])
+        with g2:
+            pie_status(df_filtrado, key=f"pie_lado_{gid}")
 
     # ======================
     # TABELA
@@ -277,7 +287,7 @@ else:
         for i, (nome_cat, gid_cat) in enumerate(CATEGORIAS.items()):
             dfr = preparar_df_bruto(carregar_df(gid_cat))
             with cols[i % 4]:
-                pie_status(dfr, key=f"pie_comp_{gid_cat}", titulo=nome_cat)
+                pie_status(dfr, key=f"pie_comp_{gid_cat}")
 
     # ======================
     # FOOTER

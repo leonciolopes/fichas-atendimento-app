@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 import streamlit_authenticator as stauth
+import plotly.express as px
 
 # ======================
 # CONFIGURAÇÃO DA PÁGINA
@@ -63,41 +63,18 @@ else:
     }
     h2, h3, h4 { color:#fff !important; font-weight:800 !important; }
 
-    /* Radios mais próximos do título */
     div[data-baseweb="radio"] {
         margin-top: -10px !important;
         margin-bottom: -10px !important;
     }
 
-    /* Box dos checkboxes um pouco mais perto do título */
-    .stCheckbox { margin-top: -8px !important; }
-
-    /* Títulos nivelados (Análise & Filtros e Situação da Demanda) */
-    .titulo-h2 {
-        font-size: 26px !important;
-        line-height: 1.1 !important;
-        margin-top: 6px !important;
-        margin-bottom: 8px !important;
-        color: #FFFFFF !important;
-        font-weight: 800 !important;
-    }
-
-    /* Para centralizar o gráfico no lado direito */
-    .center-plot {
-        display: flex; 
-        justify-content: center; 
-        align-items: center;
-        width: 100%;
-    }
-
+    .filtros-demanda { display: flex; gap: 20px; }
     @media (max-width: 768px) {
         .header-row { flex-direction: column; text-align: center; }
         .app-title { font-size: 22px !important; margin-top: 10px; }
         .header-row img { width: 150px !important; margin-bottom: 5px; }
-        h2, h3, h4, .titulo-h2 { font-size: 18px !important; }
-
-        /* filtros em coluna no mobile */
-        .filtros-demanda {flex-direction: column !important; gap: 6px;}
+        h2, h3, h4 { font-size: 16px !important; }
+        .filtros-demanda { flex-direction: column; gap: 6px; }
     }
     </style>
     """, unsafe_allow_html=True)
@@ -117,69 +94,57 @@ else:
     )
 
     # ======================
-    # FILTRO DE CATEGORIA
+    # MAPA DE CATEGORIAS
     # ======================
-    st.subheader("📑 Selecione a categoria:")
-    aba_selecionada = st.radio(
-        label="",
-        options=["Demandas Gerais", "Demandas Oftalmológicas", "Demandas da Saúde", "Demandas Jurídicas"],
-        horizontal=True,
-        label_visibility="collapsed"
-    )
-
-    # GIDs das abas
-    if aba_selecionada == "Demandas Gerais":
-        gid = "0"
-    elif aba_selecionada == "Demandas Oftalmológicas":
-        gid = "1946301846"
-    elif aba_selecionada == "Demandas da Saúde":
-        gid = "27665281"
-    else:
-        gid = "1416239426"
-
-    # ======================
-    # CARREGAR PLANILHA
-    # ======================
-    url = f"https://docs.google.com/spreadsheets/d/1TU9o9bgZPfZ-aKrxfgUqG03jTZOM3mWl0CCLn5SfwO0/export?format=csv&gid={gid}"
-    df = pd.read_csv(url)
-    df.columns = df.columns.str.replace(r"\s+", " ", regex=True).str.strip()
-
-    # ======================
-    # FILTRAR/RENOMEAR COLUNAS
-    # ======================
-    mapeamento = {
-        "Data de Atendimento": "Data de Atendimento",
-        "Nome Completo": "Nome",
-        "Telefone (31)9xxxx-xxxx": "Telefone",
-        "Endereço": "Rua",
-        "Unnamed: 9": "Número",
-        "Unnamed: 10": "Bairro",
-        "Área da Demanda": "Área da Demanda",
-        "Resumo da Demanda": "Resumo da Demanda",
-        "Servidor Responsável": "Servidor Responsável",
-        "Situação da Demanda": "Situação da Demanda",
-        "Descrição da Situação": "Descrição da Situação",
-        "Data da Atualização": "Data da Atualização"
+    CATEGORIAS = {
+        "Demandas Gerais": "0",
+        "Demandas Oftalmológicas": "1946301846",
+        "Demandas da Saúde": "27665281",
+        "Demandas Jurídicas": "1416239426",
     }
-
-    existentes = [c for c in mapeamento if c in df.columns]
-    df = df[existentes].rename(columns=mapeamento)
-
-    if "Nome" in df.columns:
-        # garante string para .str
-        df["Nome"] = df["Nome"].astype(str)
-        df = df[df["Nome"].notna() & (df["Nome"].str.strip() != "")]
-
-    colunas_visiveis = [
-        "Nome", "Telefone", "Rua", "Número", "Bairro",
-        "Área da Demanda", "Resumo da Demanda", "Servidor Responsável",
-        "Situação da Demanda", "Descrição da Situação", "Data da Atualização"
-    ]
-    df = df[[c for c in colunas_visiveis if c in df.columns]]
+    BASE_URL = "https://docs.google.com/spreadsheets/d/1TU9o9bgZPfZ-aKrxfgUqG03jTZOM3mWl0CCLn5SfwO0/export?format=csv&gid={gid}"
 
     # ======================
-    # FUNÇÕES DE ESTILO DA TABELA
+    # FUNÇÕES AUXILIARES
     # ======================
+    @st.cache_data(show_spinner=False)
+    def carregar_df(gid: str) -> pd.DataFrame:
+        url = BASE_URL.format(gid=gid)
+        df = pd.read_csv(url)
+        df.columns = df.columns.str.replace(r"\\s+", " ", regex=True).str.strip()
+        return df
+
+    def preparar_df_bruto(df_raw: pd.DataFrame) -> pd.DataFrame:
+        mapeamento = {
+            "Data de Atendimento": "Data de Atendimento",
+            "Nome Completo": "Nome",
+            "Telefone (31)9xxxx-xxxx": "Telefone",
+            "Endereço": "Rua",
+            "Unnamed: 9": "Número",
+            "Unnamed: 10": "Bairro",
+            "Área da Demanda": "Área da Demanda",
+            "Resumo da Demanda": "Resumo da Demanda",
+            "Servidor Responsável": "Servidor Responsável",
+            "Situação da Demanda": "Situação da Demanda",
+            "Descrição da Situação": "Descrição da Situação",
+            "Data da Atualização": "Data da Atualização",
+        }
+        existentes = [c for c in mapeamento if c in df_raw.columns]
+        df = df_raw[existentes].rename(columns=mapeamento)
+
+        if "Nome" in df.columns:
+            df = df[df["Nome"].notna()]
+            df["Nome"] = df["Nome"].astype(str)
+            df = df[df["Nome"].str.strip() != ""]
+
+        colunas_visiveis = [
+            "Nome", "Telefone", "Rua", "Número", "Bairro",
+            "Área da Demanda", "Resumo da Demanda", "Servidor Responsável",
+            "Situação da Demanda", "Descrição da Situação", "Data da Atualização"
+        ]
+        colunas = [c for c in colunas_visiveis if c in df.columns]
+        return df[colunas].copy()
+
     def highlight_situacao(val):
         if isinstance(val, str):
             v = val.lower()
@@ -189,8 +154,9 @@ else:
         return "text-align:center;"
 
     def make_styler(df_in: pd.DataFrame):
-        sty = df_in.style.set_properties(**{"text-align": "center"}) \
-                         .set_table_styles([{"selector": "th", "props": [("text-align", "center")]}])
+        sty = (df_in.style
+               .set_properties(**{"text-align": "center"})
+               .set_table_styles([{"selector": "th", "props": [("text-align", "center")]}]))
         if "Situação da Demanda" in df_in.columns:
             sty = sty.applymap(highlight_situacao, subset=["Situação da Demanda"])
         try:
@@ -199,103 +165,122 @@ else:
             sty = sty.hide_index()
         return sty
 
-    # ======================
-    # LAYOUT: FILTROS (ESQ) + GRÁFICO (DIR)
-    # ======================
-    col_filtros, col_graf = st.columns([7, 5], gap="large")
+    # ---- Gráfico de pizza (com cores personalizadas)
+    def pie_status(df: pd.DataFrame, key: str):
+        col = "Situação da Demanda"
+        if col not in df.columns or df.empty:
+            st.info("Sem dados para o gráfico nesta seleção.")
+            return
 
-    # ===== coluna ESQUERDA – filtros e tabela =====
+        s = (df[col].fillna("")
+                .astype(str)
+                .str.strip()
+                .str.lower())
+
+        mapa = {
+            "solucionado": "Solucionado",
+            "em andamento": "Em Andamento",
+            "prejudicado": "Prejudicado",
+        }
+        s = s.map(mapa).fillna("Outros")
+
+        ordem = ["Solucionado", "Em Andamento", "Prejudicado", "Outros"]
+        contagem = (s.value_counts().reindex(ordem, fill_value=0).reset_index())
+        contagem.columns = ["Situação", "Quantidade"]
+
+        # Paleta personalizada
+        cores = {
+            "Solucionado": "#33cc33",   # Verde
+            "Em Andamento": "#ffd633",  # Amarelo
+            "Prejudicado": "#ff4d4d",   # Vermelho
+            "Outros": "#a6a6a6"         # Cinza
+        }
+
+        fig = px.pie(
+            contagem,
+            names="Situação",
+            values="Quantidade",
+            title=None,
+            hole=0.35,
+            color="Situação",
+            color_discrete_map=cores
+        )
+        fig.update_traces(textposition="inside", textinfo="percent+label")
+        fig.update_layout(
+            margin=dict(l=0, r=0, t=0, b=0),
+            width=420, height=420,
+            showlegend=True
+        )
+        st.plotly_chart(fig, use_container_width=False, key=key)
+
+    # ======================
+    # FILTRO DE CATEGORIA
+    # ======================
+    st.subheader("📑 Selecione a categoria:")
+    aba_selecionada = st.radio(
+        label="",
+        options=list(CATEGORIAS.keys()),
+        horizontal=True,
+        label_visibility="collapsed"
+    )
+    gid = CATEGORIAS[aba_selecionada]
+
+    # ======================
+    # CARREGAR + PREPARAR DF
+    # ======================
+    df_raw = carregar_df(gid)
+    df = preparar_df_bruto(df_raw)
+
+    # ======================
+    # FILTROS + GRÁFICO LADO A LADO
+    # ======================
+    st.subheader("🔎 Análise e Filtros")
+
+    col_filtros, col_grafico = st.columns([1, 1])
+
     with col_filtros:
-        st.markdown('<div class="titulo-h2">🔎 Análise e Filtros</div>', unsafe_allow_html=True)
-
         if len(df.columns) == 0:
             st.info("Não há colunas disponíveis nesta aba.")
             df_filtrado = df.copy()
         else:
-            # Filtro de texto
             coluna = st.selectbox("Selecione uma coluna para filtrar:", df.columns, index=0)
             valor = st.text_input(f"Digite um valor para filtrar em **{coluna}**:")
 
-            # Título grande para a situação
-            st.markdown('<div class="titulo-h2">📊 Situação da Demanda</div>', unsafe_allow_html=True)
-            # Checkboxes (em coluna no desktop também fica elegante com o espaçamento reduzido)
+            st.subheader("📊 Situação da Demanda")
+
+            st.markdown('<div class="filtros-demanda">', unsafe_allow_html=True)
             chk_solucionado = st.checkbox("Solucionado")
             chk_andamento = st.checkbox("Em Andamento")
             chk_prejudicado = st.checkbox("Prejudicado")
 
+            filtros = []
+            if chk_solucionado:
+                filtros.append("solucionado")
+            if chk_andamento:
+                filtros.append("em andamento")
+            if chk_prejudicado:
+                filtros.append("prejudicado")
+
             df_filtrado = df.copy()
             if valor:
                 df_filtrado = df_filtrado[df_filtrado[coluna].astype(str).str.contains(valor, case=False, na=False)]
-
-            filtros = []
-            if chk_solucionado: filtros.append("solucionado")
-            if chk_andamento:   filtros.append("em andamento")
-            if chk_prejudicado: filtros.append("prejudicado")
-
             if filtros and "Situação da Demanda" in df_filtrado.columns:
-                df_filtrado = df_filtrado[df_filtrado["Situação da Demanda"].str.lower().isin(filtros)]
+                df_filtrado = df_filtrado[df_filtrado["Situação da Demanda"].astype(str).str.lower().isin(filtros)]
 
-        st.subheader(f"📌 Fichas de Atendimento - {aba_selecionada}")
-        st.dataframe(
-            make_styler(df_filtrado),
-            use_container_width=True,
-            height=500
-        )
+    with col_grafico:
+        g1, g2, g3 = st.columns([1, 2, 1])
+        with g2:
+            pie_status(df_filtrado, key=f"pie_lado_{gid}")
 
-    # ===== coluna DIREITA – gráfico =====
-    with col_graf:
-        # Função do gráfico de pizza
-        def pie_status(df_source: pd.DataFrame, titulo_legenda: str):
-            col_name = "Situação da Demanda"
-            if col_name not in df_source.columns or df_source.empty:
-                st.info("Sem dados para exibir o gráfico.")
-                return
-
-            # Normaliza
-            s = df_source[col_name].astype(str).str.strip().str.lower()
-
-            # Classes que queremos contar
-            classes = ["solucionado", "em andamento", "prejudicado"]
-            counts = {c: 0 for c in classes}
-            outros = 0
-            for v in s:
-                if v in counts:
-                    counts[v] += 1
-                else:
-                    outros += 1
-
-            labels = ["Solucionado", "Em Andamento", "Prejudicado", "Outros"]
-            valores = [counts["solucionado"], counts["em andamento"], counts["prejudicado"], outros]
-
-            # Cores personalizadas
-            color_map = {
-                "Solucionado": "#28a745",     # Verde
-                "Em Andamento": "#ffd633",    # Amarelo
-                "Prejudicado": "#ff4d4d",     # Vermelho
-                "Outros": "#B0B8BF"           # Cinza
-            }
-
-            fig = px.pie(
-                names=labels,
-                values=valores,
-                hole=0.55,
-                color=labels,
-                color_discrete_map=color_map
-            )
-            # Sem título, tamanho menor e centralização
-            fig.update_layout(
-                showlegend=True,
-                legend_title_text=titulo_legenda,
-                width=380, height=380,
-                margin=dict(l=10, r=10, t=10, b=10),
-            )
-            fig.update_traces(textposition="inside", textinfo="percent+label")
-            # Envolve numa div para centralizar
-            st.markdown('<div class="center-plot">', unsafe_allow_html=True)
-            st.plotly_chart(fig, use_container_width=False)
-            st.markdown('</div>', unsafe_allow_html=True)
-
-        pie_status(df_filtrado, titulo_legenda=aba_selecionada)
+    # ======================
+    # TABELA
+    # ======================
+    st.subheader(f"📌 Fichas de Atendimento - {aba_selecionada}")
+    st.dataframe(
+        make_styler(df_filtrado),
+        use_container_width=True,
+        height=500
+    )
 
     # ======================
     # FOOTER
@@ -323,5 +308,4 @@ else:
         unsafe_allow_html=True
     )
 
-    # Botão de logout
     authenticator.logout("Sair", "sidebar")

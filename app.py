@@ -87,7 +87,7 @@ else:
         <div class="header-row">
             <div></div>
             <div class="app-title">Fichas de Atendimento - Gabinete Vereador Leôncio Lopes</div>
-            <img src="https://raw.githubusercontent.com/leonciolopes2528/fichas-atendimento-app/main/Logo-Branca.png" width="220">
+            <img src="https://raw.githubusercontent.com/leonciolopes/fichas-atendimento-app/main/Logo-Branca.png" width="220">
         </div>
         """,
         unsafe_allow_html=True

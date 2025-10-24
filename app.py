@@ -1,3 +1,6 @@
+import base64
+from pathlib import Path
+
 import streamlit as st
 import pandas as pd
 import streamlit_authenticator as stauth
@@ -63,6 +66,7 @@ else:
     }
     h2, h3, h4 { color:#fff !important; font-weight:800 !important; }
 
+    /* Radios mais próximos do título */
     div[data-baseweb="radio"] {
         margin-top: -10px !important;
         margin-bottom: -10px !important;
@@ -80,14 +84,26 @@ else:
     """, unsafe_allow_html=True)
 
     # ======================
-    # CABEÇALHO
+    # CABEÇALHO (logo local base64 + fallback GitHub)
     # ======================
+    def _img_b64(path: str) -> str:
+        p = Path(path)
+        with p.open("rb") as f:
+            return base64.b64encode(f.read()).decode("utf-8")
+
+    try:
+        # usa o arquivo local
+        LOGO_SRC = f"data:image/png;base64,{_img_b64('Logo-Branca.png')}"
+    except Exception:
+        # fallback para o raw do GitHub (ajuste aqui se mudar repo/usuário/arquivo)
+        LOGO_SRC = "https://raw.githubusercontent.com/leonciolopes/fichas-atendimento-app/main/Logo-Branca.png"
+
     st.markdown(
-        """
+        f"""
         <div class="header-row">
             <div></div>
             <div class="app-title">Fichas de Atendimento - Gabinete Vereador Leôncio Lopes</div>
-            <img src="https://raw.githubusercontent.com/leonciolopes/fichas-atendimento-app/main/Logo-Branca.png" width="220">
+            <img src="{LOGO_SRC}" width="220" />
         </div>
         """,
         unsafe_allow_html=True
@@ -111,7 +127,7 @@ else:
     def carregar_df(gid: str) -> pd.DataFrame:
         url = BASE_URL.format(gid=gid)
         df = pd.read_csv(url)
-        df.columns = df.columns.str.replace(r"\\s+", " ", regex=True).str.strip()
+        df.columns = df.columns.str.replace(r"\s+", " ", regex=True).str.strip()
         return df
 
     def preparar_df_bruto(df_raw: pd.DataFrame) -> pd.DataFrame:
@@ -148,9 +164,12 @@ else:
     def highlight_situacao(val):
         if isinstance(val, str):
             v = val.lower()
-            if "prejudicado" in v:   return "background-color:#ff4d4d;color:white;font-weight:bold; text-align:center;"
-            if "em andamento" in v:  return "background-color:#ffd633;color:black;font-weight:bold; text-align:center;"
-            if "solucionado" in v:   return "background-color:#33cc33;color:white;font-weight:bold; text-align:center;"
+            if "prejudicado" in v:
+                return "background-color:#ff4d4d;color:white;font-weight:bold; text-align:center;"
+            if "em andamento" in v:
+                return "background-color:#ffd633;color:black;font-weight:bold; text-align:center;"
+            if "solucionado" in v:
+                return "background-color:#33cc33;color:white;font-weight:bold; text-align:center;"
         return "text-align:center;"
 
     def make_styler(df_in: pd.DataFrame):
@@ -252,6 +271,7 @@ else:
             chk_solucionado = st.checkbox("Solucionado")
             chk_andamento = st.checkbox("Em Andamento")
             chk_prejudicado = st.checkbox("Prejudicado")
+            st.markdown('</div>', unsafe_allow_html=True)
 
             filtros = []
             if chk_solucionado:
@@ -308,4 +328,5 @@ else:
         unsafe_allow_html=True
     )
 
+    # Botão de logout
     authenticator.logout("Sair", "sidebar")

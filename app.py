@@ -134,10 +134,10 @@ else:
         mapeamento = {
             "Data de Atendimento": "Data de Atendimento",
             "Nome Completo": "Nome",
-            "Telefone (31)9xxxx-xxxx": "Telefone",
+            "Telefone": "Telefone",
             "Endereço": "Rua",
-            "Unnamed: 9": "Número",
-            "Unnamed: 10": "Bairro",
+            "Unnamed: 10": "Número",
+            "Unnamed: 11": "Bairro",
             "Área da Demanda": "Área da Demanda",
             "Resumo da Demanda": "Resumo da Demanda",
             "Servidor Responsável": "Servidor Responsável",
@@ -154,7 +154,7 @@ else:
             df = df[df["Nome"].str.strip() != ""]
 
         colunas_visiveis = [
-            "Nome", "Telefone", "Rua", "Número", "Bairro",
+            "Data de Atendimento", "Nome", "Telefone", "Rua", "Número", "Bairro",
             "Área da Demanda", "Resumo da Demanda", "Servidor Responsável",
             "Situação da Demanda", "Descrição da Situação", "Data da Atualização"
         ]

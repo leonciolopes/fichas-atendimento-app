@@ -131,35 +131,54 @@ else:
         return df
 
     def preparar_df_bruto(df_raw: pd.DataFrame) -> pd.DataFrame:
-        mapeamento = {
-            "Data de Atendimento": "Data de Atendimento",
-            "Nome Completo": "Nome",
-            "Telefone": "Telefone",
-            "Endereço": "Rua",
-            "Unnamed: 10": "Número",
-            "Unnamed: 11": "Bairro",
-            "Área da Demanda": "Área da Demanda",
-            "Resumo da Demanda": "Resumo da Demanda",
-            "Servidor Responsável": "Servidor Responsável",
-            "Situação da Demanda": "Situação da Demanda",
-            "Descrição da Situação": "Descrição da Situação",
-            "Data da Atualização": "Data da Atualização",
-        }
-        existentes = [c for c in mapeamento if c in df_raw.columns]
-        df = df_raw[existentes].rename(columns=mapeamento)
 
-        if "Nome" in df.columns:
-            df = df[df["Nome"].notna()]
-            df["Nome"] = df["Nome"].astype(str)
-            df = df[df["Nome"].str.strip() != ""]
+    mapeamento = {
+        "Data de Atendimento": "Data de Atendimento",
+        "Nome Completo": "Nome",
+        "Telefone": "Telefone",
+        "Endereço": "Rua",
+        "Unnamed: 10": "Número",
+        "Unnamed: 11": "Bairro",
+        "Área da Demanda": "Área da Demanda",
+        "Resumo da Demanda": "Resumo da Demanda",
+        "Servidor Responsável": "Servidor Responsável",
+        "Situação da Demanda": "Situação da Demanda",
+        "Descrição da Situação": "Descrição da Situação",
+        "Data da Atualização": "Data da Atualização",
+    }
 
-        colunas_visiveis = [
-            "Data de Atendimento", "Nome", "Telefone", "Rua", "Número", "Bairro",
-            "Área da Demanda", "Resumo da Demanda", "Servidor Responsável",
-            "Situação da Demanda", "Descrição da Situação", "Data da Atualização"
-        ]
-        colunas = [c for c in colunas_visiveis if c in df.columns]
-        return df[colunas].copy()
+    # Mantém somente colunas existentes
+    colunas_existentes = [c for c in mapeamento.keys() if c in df_raw.columns]
+
+    # Renomeia as colunas
+    df = df_raw[colunas_existentes].rename(columns=mapeamento)
+
+    # Remove linhas sem nome
+    if "Nome" in df.columns:
+        df = df[df["Nome"].notna()]
+        df["Nome"] = df["Nome"].astype(str)
+        df = df[df["Nome"].str.strip() != ""]
+
+    # Ordem final das colunas visíveis
+    ordem_final = [
+        "Data de Atendimento",
+        "Nome",
+        "Telefone",
+        "Rua",
+        "Número",
+        "Bairro",
+        "Área da Demanda",
+        "Resumo da Demanda",
+        "Servidor Responsável",
+        "Situação da Demanda",
+        "Descrição da Situação",
+        "Data da Atualização",
+    ]
+
+    # Mantém apenas as que existem
+    ordem_final = [c for c in ordem_final if c in df.columns]
+
+    return df[ordem_final].copy()
 
     def highlight_situacao(val):
         if isinstance(val, str):

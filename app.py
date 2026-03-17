@@ -142,6 +142,7 @@ else:
         mapeamento = {
             "Data de Atendimento": "Data de Atendimento",
             "Nome Completo": "Nome",
+            "CPF": "CPF",
             "Telefone": "Telefone",
             "Endereço": "Rua",
             "Unnamed: 10": "Número",
@@ -165,6 +166,7 @@ else:
         ordem = [
             "Data de Atendimento",
             "Nome",
+            "CPF",
             "Telefone",
             "Rua",
             "Número",

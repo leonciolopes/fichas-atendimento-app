@@ -44,6 +44,7 @@ authenticator = stauth.Authenticate(
 
 name, auth_status, username = authenticator.login(location="sidebar")
 
+
 # ======================
 # CSS
 # ======================
@@ -53,24 +54,35 @@ header[data-testid="stHeader"] {visibility: hidden;}
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
 
+.block-container {
+    padding-top: 0.5rem !important;
+}
+
 .header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #004D26;
+    padding: 2px 8px;
+    border-radius: 8px;
+    margin-top: -12px;
+    margin-bottom: 4px;
+}
+
+.app-title {
+    flex: 1;
+    text-align: center;
+    color: white;
+    font-size: 30px;
+    font-weight: 800;
+    margin: 0;
+    line-height: 1.05;
+}
+
+.filtros-demanda {
     display:flex;
-    align-items:center;
-    justify-content:space-between;
-    background-color:#004D26;
-    padding:8px;
-    border-radius:8px;
+    gap:20px;
 }
-
-.app-title{
-    flex:1;
-    text-align:center;
-    color:white;
-    font-size:36px;
-    font-weight:800;
-}
-
-.filtros-demanda{display:flex;gap:20px;}
 
 .login-bg-center {
     min-height: 78vh;
@@ -80,36 +92,57 @@ footer {visibility: hidden;}
     align-items: center;
     pointer-events: none;
     text-align: center;
+    position: relative;
 }
 
 .login-bg-title {
-    font-size: 54px;
-    font-weight: 800;
+    font-size: 72px;
+    font-weight: 900;
     color: white;
-    margin-bottom: 35px;
-    max-width: 1000px;
-    line-height: 1.15;
+    max-width: 1200px;
+    line-height: 1.12;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.login-bg-logo {
+    position: fixed;
+    right: 50px;
+    bottom: 35px;
+    z-index: 1;
 }
 
 .login-bg-logo img {
-    width: 220px;
+    width: 230px;
     max-width: 100%;
 }
 
 @media (max-width:768px){
-    .header-row{flex-direction:column;}
-    .app-title{font-size:22px;}
+    .header-row {
+        flex-direction:column;
+    }
+
+    .app-title {
+        font-size:22px;
+    }
 
     .login-bg-title {
-        font-size: 32px;
+        font-size: 38px;
+        padding: 0 20px;
+    }
+
+    .login-bg-logo {
+        right: 20px;
+        bottom: 20px;
     }
 
     .login-bg-logo img {
-        width: 170px;
+        width: 150px;
     }
 }
 </style>
 """, unsafe_allow_html=True)
+
 
 # ======================
 # VERIFICAÇÃO LOGIN
@@ -128,7 +161,7 @@ elif auth_status is None:
     st.markdown(f"""
     <div class="login-bg-center">
         <div class="login-bg-title">
-            App de Consultas das Fichas de Atendimento
+            APP DE CONSULTAS DAS FICHAS DE ATENDIMENTO
         </div>
         <div class="login-bg-logo">
             <img src="{LOGO}" alt="Logo">

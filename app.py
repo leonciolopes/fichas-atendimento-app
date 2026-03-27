@@ -12,7 +12,7 @@ st.set_page_config(page_title="Fichas de Atendimento", layout="wide")
 
 
 # ======================
-# FUNÇÃO LOGO BASE64
+# FUNÇÃO LOGO
 # ======================
 def _img_b64(path):
     with open(path, "rb") as f:
@@ -44,7 +44,6 @@ authenticator = stauth.Authenticate(
 
 name, auth_status, username = authenticator.login(location="sidebar")
 
-
 # ======================
 # CSS
 # ======================
@@ -53,14 +52,6 @@ st.markdown("""
 header[data-testid="stHeader"] {visibility: hidden;}
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
-
-.stApp {
-    background-color: #005f27;
-}
-
-section[data-testid="stSidebar"] {
-    background-color: #0e5b2a;
-}
 
 .header-row {
     display:flex;
@@ -79,59 +70,46 @@ section[data-testid="stSidebar"] {
     font-weight:800;
 }
 
-.filtros-demanda {
-    display:flex;
-    gap:20px;
-}
+.filtros-demanda{display:flex;gap:20px;}
 
-.login-hero {
+.login-bg-center {
     min-height: 78vh;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    pointer-events: none;
     text-align: center;
-    padding: 20px;
 }
 
-.login-title {
-    font-size: 58px;
+.login-bg-title {
+    font-size: 54px;
     font-weight: 800;
+    color: white;
+    margin-bottom: 35px;
+    max-width: 1000px;
     line-height: 1.15;
-    max-width: 1100px;
-    margin-bottom: 50px;
-    color: white !important;
 }
 
-.login-logo {
-    margin-top: 30px;
-}
-
-.login-logo img {
+.login-bg-logo img {
     width: 220px;
     max-width: 100%;
 }
 
 @media (max-width:768px){
-    .header-row {
-        flex-direction:column;
+    .header-row{flex-direction:column;}
+    .app-title{font-size:22px;}
+
+    .login-bg-title {
+        font-size: 32px;
     }
 
-    .app-title {
-        font-size:22px;
-    }
-
-    .login-title {
-        font-size:34px;
-    }
-
-    .login-logo img {
-        width:170px;
+    .login-bg-logo img {
+        width: 170px;
     }
 }
 </style>
 """, unsafe_allow_html=True)
-
 
 # ======================
 # VERIFICAÇÃO LOGIN
@@ -140,23 +118,26 @@ if auth_status is False:
     st.error("Usuário ou senha incorretos ❌")
 
 elif auth_status is None:
+    st.warning("Digite usuário e senha para continuar 🔑")
+
     try:
         LOGO = f"data:image/png;base64,{_img_b64('Logo-Branca.png')}"
     except Exception:
         LOGO = "https://raw.githubusercontent.com/leonciolopes/fichas-atendimento-app/main/Logo-Branca.png"
 
     st.markdown(f"""
-    <div class="login-hero">
-        <div class="login-title">
-            App de Consultas de Fichas de Atendimento
+    <div class="login-bg-center">
+        <div class="login-bg-title">
+            App de Consultas das Fichas de Atendimento
         </div>
-        <div class="login-logo">
+        <div class="login-bg-logo">
             <img src="{LOGO}" alt="Logo">
         </div>
     </div>
     """, unsafe_allow_html=True)
 
 else:
+    authenticator.logout("Sair", "sidebar")
 
     # ======================
     # BOTÃO ATUALIZAR
@@ -400,5 +381,3 @@ else:
     © 2025 Gabinete Vereador Leôncio Lopes
     </div>
     """, unsafe_allow_html=True)
-
-    authenticator.logout("Sair", "sidebar")

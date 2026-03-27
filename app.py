@@ -161,7 +161,7 @@ else:
     # ======================
     # BOTÃO ATUALIZAR
     # ======================
-    if st.button("🔄 Atualizar dados"):
+    if st.sidebar.button("🔄 Atualizar dados"):
         st.cache_data.clear()
         st.rerun()
 

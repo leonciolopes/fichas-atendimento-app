@@ -10,6 +10,15 @@ import plotly.express as px
 # ======================
 st.set_page_config(page_title="Fichas de Atendimento", layout="wide")
 
+
+# ======================
+# FUNÇÃO LOGO BASE64
+# ======================
+def _img_b64(path):
+    with open(path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
+
+
 # ======================
 # LOGIN
 # ======================
@@ -35,6 +44,95 @@ authenticator = stauth.Authenticate(
 
 name, auth_status, username = authenticator.login(location="sidebar")
 
+
+# ======================
+# CSS
+# ======================
+st.markdown("""
+<style>
+header[data-testid="stHeader"] {visibility: hidden;}
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+
+.stApp {
+    background-color: #005f27;
+}
+
+section[data-testid="stSidebar"] {
+    background-color: #0e5b2a;
+}
+
+.header-row {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background-color:#004D26;
+    padding:8px;
+    border-radius:8px;
+}
+
+.app-title{
+    flex:1;
+    text-align:center;
+    color:white;
+    font-size:36px;
+    font-weight:800;
+}
+
+.filtros-demanda {
+    display:flex;
+    gap:20px;
+}
+
+.login-hero {
+    min-height: 78vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 20px;
+}
+
+.login-title {
+    font-size: 58px;
+    font-weight: 800;
+    line-height: 1.15;
+    max-width: 1100px;
+    margin-bottom: 50px;
+    color: white !important;
+}
+
+.login-logo {
+    margin-top: 30px;
+}
+
+.login-logo img {
+    width: 220px;
+    max-width: 100%;
+}
+
+@media (max-width:768px){
+    .header-row {
+        flex-direction:column;
+    }
+
+    .app-title {
+        font-size:22px;
+    }
+
+    .login-title {
+        font-size:34px;
+    }
+
+    .login-logo img {
+        width:170px;
+    }
+}
+</style>
+""", unsafe_allow_html=True)
+
+
 # ======================
 # VERIFICAÇÃO LOGIN
 # ======================
@@ -42,7 +140,21 @@ if auth_status is False:
     st.error("Usuário ou senha incorretos ❌")
 
 elif auth_status is None:
-    st.warning("Digite usuário e senha para continuar 🔑")
+    try:
+        LOGO = f"data:image/png;base64,{_img_b64('Logo-Branca.png')}"
+    except Exception:
+        LOGO = "https://raw.githubusercontent.com/leonciolopes/fichas-atendimento-app/main/Logo-Branca.png"
+
+    st.markdown(f"""
+    <div class="login-hero">
+        <div class="login-title">
+            App de Consultas de Fichas de Atendimento
+        </div>
+        <div class="login-logo">
+            <img src="{LOGO}" alt="Logo">
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 else:
 
@@ -54,50 +166,11 @@ else:
         st.rerun()
 
     # ======================
-    # CSS
-    # ======================
-    st.markdown("""
-    <style>
-    header[data-testid="stHeader"] {visibility: hidden;}
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-
-    .header-row {
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        background-color:#004D26;
-        padding:8px;
-        border-radius:8px;
-    }
-
-    .app-title{
-        flex:1;
-        text-align:center;
-        color:white;
-        font-size:36px;
-        font-weight:800;
-    }
-
-    .filtros-demanda{display:flex;gap:20px;}
-
-    @media (max-width:768px){
-        .header-row{flex-direction:column;}
-        .app-title{font-size:22px;}
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-    # ======================
     # LOGO
     # ======================
-    def _img_b64(path):
-        with open(path, "rb") as f:
-            return base64.b64encode(f.read()).decode()
-
     try:
         LOGO = f"data:image/png;base64,{_img_b64('Logo-Branca.png')}"
-    except:
+    except Exception:
         LOGO = "https://raw.githubusercontent.com/leonciolopes/fichas-atendimento-app/main/Logo-Branca.png"
 
     st.markdown(f"""
@@ -125,20 +198,15 @@ else:
     # ======================
     @st.cache_data(ttl=10)
     def carregar_df(gid):
-
         url = BASE_URL.format(gid=gid)
-
         df = pd.read_csv(url)
-
         df.columns = df.columns.str.replace(r"\s+", " ", regex=True).str.strip()
-
         return df
 
     # ======================
     # PREPARAR DATAFRAME
     # ======================
     def preparar_df_bruto(df_raw):
-
         mapeamento = {
             "Data de Atendimento": "Data de Atendimento",
             "Nome Completo": "Nome",
@@ -156,7 +224,6 @@ else:
         }
 
         colunas_existentes = [c for c in mapeamento if c in df_raw.columns]
-
         df = df_raw[colunas_existentes].rename(columns=mapeamento)
 
         if "Nome" in df.columns:
@@ -180,16 +247,13 @@ else:
         ]
 
         ordem = [c for c in ordem if c in df.columns]
-
         return df[ordem].copy()
 
     # ======================
     # ESTILO SITUAÇÃO
     # ======================
     def highlight_situacao(val):
-
         if isinstance(val, str):
-
             v = val.lower()
 
             if "solucionado" in v:
@@ -204,7 +268,6 @@ else:
         return "text-align:center"
 
     def make_styler(df):
-
         sty = df.style.set_properties(**{"text-align": "center"})
 
         if "Situação da Demanda" in df.columns:
@@ -212,7 +275,7 @@ else:
 
         try:
             sty = sty.hide(axis="index")
-        except:
+        except Exception:
             sty = sty.hide_index()
 
         return sty
@@ -221,7 +284,6 @@ else:
     # GRÁFICO
     # ======================
     def pie_status(df):
-
         if "Situação da Demanda" not in df.columns:
             return
 
@@ -234,9 +296,7 @@ else:
         }
 
         s = s.map(mapa).fillna("Outros")
-
         contagem = s.value_counts().reset_index()
-
         contagem.columns = ["Situação", "Quantidade"]
 
         cores = {
@@ -255,8 +315,7 @@ else:
             color_discrete_map=cores
         )
 
-        fig.update_layout(width=420, height=420, margin=dict(t=0,b=0,l=0,r=0))
-
+        fig.update_layout(width=420, height=420, margin=dict(t=0, b=0, l=0, r=0))
         st.plotly_chart(fig)
 
     # ======================
@@ -277,7 +336,6 @@ else:
     # CARREGAR DADOS
     # ======================
     df_raw = carregar_df(gid)
-
     df = preparar_df_bruto(df_raw)
 
     # ======================
@@ -285,12 +343,10 @@ else:
     # ======================
     st.subheader("🔎 Análise e Filtros")
 
-    col1, col2 = st.columns([1,1])
+    col1, col2 = st.columns([1, 1])
 
     with col1:
-
         coluna = st.selectbox("Selecione uma coluna para filtrar:", df.columns)
-
         valor = st.text_input("Digite um valor para filtrar:")
 
         st.subheader("📊 Situação da Demanda")
@@ -313,13 +369,16 @@ else:
         df_filtrado = df.copy()
 
         if valor:
-            df_filtrado = df_filtrado[df_filtrado[coluna].astype(str).str.contains(valor, case=False, na=False)]
+            df_filtrado = df_filtrado[
+                df_filtrado[coluna].astype(str).str.contains(valor, case=False, na=False)
+            ]
 
         if filtros:
-            df_filtrado = df_filtrado[df_filtrado["Situação da Demanda"].str.lower().isin(filtros)]
+            df_filtrado = df_filtrado[
+                df_filtrado["Situação da Demanda"].str.lower().isin(filtros)
+            ]
 
     with col2:
-
         pie_status(df_filtrado)
 
     # ======================
